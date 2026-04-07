@@ -35,8 +35,7 @@ Codex app-server を Next.js の Node runtime 経由で中継し、ブラウザ 
 
 ## コーディング規約
 
-
-- 全ての作業を
+- 全ての作業をサブエージェントにスポーンする
 - 変更は既存の bridge / UI の流れに合わせ、影響範囲を最小化する。
 - `app/api/*` は `runtime = "nodejs"` を維持し、app-server との接続はサーバー側で扱う。
 - 認証情報やシークレットをブラウザへ渡さない。
