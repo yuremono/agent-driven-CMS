@@ -17,4 +17,5 @@ descriptions:
   - "[main] NOTE3 の途中で切れて見える問題に対して、UI 側の transcript 更新を turnId ベースの純粋関数へ寄せ、delta / completed / completed-first / replay の 4 パターンを node:test で固定した。`useBridgeSession` の assistant entry は completed を最終文として確定し、遅延 delta を stale state として無視するように変更した。"
   - "[main] DevEditorOverlay の `/admin` 限定 return を外し、全ページで同じ bridge transcript 修正が見えるようにした。[20260409 16:56]"
   - "[main] `feature/chat-bridge-stability-root` を作成し、commit `53b975d` を origin へ push して remote tracking を設定した。[20260409 16:56]"
+  - "[main] GitHub PR #1 を main 向けに作成し、branch `feature/chat-bridge-stability-root` の変更内容と検証結果を共有した。[20260409 16:56]"
 ---
