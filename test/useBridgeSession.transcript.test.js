@@ -106,3 +106,34 @@ test("replayed completed events do not create stale duplicate assistant text", (
   assert.equal(assistant?.text, "First half plus end");
   assert.equal(assistant?.status, "complete");
 });
+
+test("pending assistant placeholder accepts deltas and completion", () => {
+  const runtime = createTranscriptRuntime();
+  runtime.pendingAssistantId = runtime.nextId++;
+  let conversation = [
+    {
+      id: runtime.pendingAssistantId,
+      role: "assistant",
+      text: "",
+      status: "streaming",
+    },
+  ];
+
+  conversation = applyAssistantDelta(conversation, runtime, {
+    turnId: "turn-5",
+    delta: "streamed ",
+  });
+  conversation = applyAssistantDelta(conversation, runtime, {
+    turnId: "turn-5",
+    delta: "text",
+  });
+  conversation = completeAssistantMessage(conversation, runtime, {
+    turnId: "turn-5",
+    text: "streamed text",
+  });
+
+  const assistant = latestAssistant(conversation);
+  assert.equal(conversation.length, 1);
+  assert.equal(assistant?.text, "streamed text");
+  assert.equal(assistant?.status, "complete");
+});

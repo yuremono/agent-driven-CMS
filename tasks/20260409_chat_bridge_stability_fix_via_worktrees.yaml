@@ -19,4 +19,5 @@ descriptions:
   - "[main] `feature/chat-bridge-stability-root` を作成し、commit `53b975d` を origin へ push して remote tracking を設定した。[20260409 16:56]"
   - "[main] GitHub PR #1 を main 向けに作成し、branch `feature/chat-bridge-stability-root` の変更内容と検証結果を共有した。[20260409 16:56]"
   - "[review] `/admin` で BridgeDashboard と DevEditorOverlay が別々に useBridgeSession() を起動する二重購読の指摘を受け、BridgeSessionProvider を追加して session を共有する形に修正した。[20260409 17:18]"
+  - "[review] pendingAssistantId 経由の実運用パスを `test/useBridgeSession.transcript.test.js` に追加し、placeholder assistant entry が delta/completed を受けるケースを固定した。[20260409 17:21]"
 ---
