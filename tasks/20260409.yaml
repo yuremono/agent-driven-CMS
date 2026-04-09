@@ -1,4 +1,12 @@
 ---
+task: "refactor non ignored files"
+status: "done"
+created_at: "20260409 21:10"
+completed_at: "20260409 21:13"
+request_summary: "Gitignoreに含まれているファイル以外をリファクタリングしてからメインブランチにプッシュしておいてください。"
+update_summary: "API route の共通処理を `lib/bridge-http.js` に整理し、`app/components/useBridgeSession.js` の fetch / error handling を統一した。回帰は `npm test` と `npm run build` で確認済み。"
+---
+---
 task: "publish github pages preview"
 status: "done"
 created_at: "20260409 20:18"

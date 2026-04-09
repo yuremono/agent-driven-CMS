@@ -1,10 +1,11 @@
 import { getBridge } from "../../../../lib/bridge.js";
+import { jsonError, readJsonBody } from "../../../../lib/bridge-http.js";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
   const bridge = getBridge();
-  const body = await request.json().catch(() => ({}));
+  const body = await readJsonBody(request);
   const input = typeof body.input === "string" ? body.input.trim() : "";
   const model = typeof body.model === "string" ? body.model.trim() : "";
 
@@ -19,11 +20,6 @@ export async function POST(request) {
       turnId: result?.turn?.id ?? null,
     });
   } catch (error) {
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : "failed to submit prompt",
-      },
-      { status: 500 },
-    );
+    return jsonError(error, "failed to submit prompt");
   }
 }

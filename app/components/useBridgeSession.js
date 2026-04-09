@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchJson } from "../../lib/bridge-http.js";
 
 const emptyStatus = {
   provider: "codex",
@@ -37,6 +38,10 @@ function upsertByRequestId(list, request) {
 
 function removeByRequestId(list, requestId) {
   return list.filter((item) => item.requestId !== requestId);
+}
+
+function getErrorMessage(error, fallbackMessage) {
+  return error instanceof Error ? error.message : fallbackMessage;
 }
 
 function getRateLimitSummary(rateLimits) {
@@ -250,11 +255,20 @@ export function useBridgeSession() {
     logout: false,
   });
 
+  function pushLocalError(error, fallbackMessage) {
+    setEvents((current) => [
+      {
+        type: "local-error",
+        message: getErrorMessage(error, fallbackMessage),
+      },
+      ...current,
+    ]);
+  }
+
   useEffect(() => {
     let mounted = true;
 
-    fetch("/api/bridge/status")
-      .then((res) => res.json())
+    fetchJson("/api/bridge/status")
       .then((data) => {
         if (mounted) setStatus(data);
       })
@@ -458,7 +472,7 @@ export function useBridgeSession() {
       };
 
   async function refreshStatus() {
-    const data = await fetch("/api/bridge/status").then((res) => res.json());
+    const data = await fetchJson("/api/bridge/status");
     setStatus(data);
   }
 
@@ -487,18 +501,14 @@ export function useBridgeSession() {
       createTranscriptEntry(assistantId, "assistant", "", "streaming"),
     ]);
     try {
-      const response = await fetch("/api/bridge/turn", {
+      await fetchJson("/api/bridge/turn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: value, model: selectedModel }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to submit prompt");
-      }
+      }, "failed to submit prompt");
       setInput("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "unknown error";
+      const message = getErrorMessage(error, "unknown error");
       setConversation((current) =>
         updateEntryById(current, assistantId, (entry) => ({
           ...entry,
@@ -509,13 +519,7 @@ export function useBridgeSession() {
       if (transcriptRuntimeRef.current.pendingAssistantId === assistantId) {
         transcriptRuntimeRef.current.pendingAssistantId = null;
       }
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message,
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "unknown error");
     } finally {
       setSending(false);
     }
@@ -524,26 +528,16 @@ export function useBridgeSession() {
   async function handleApproval(request, decision) {
     setRespondingRequestId(request.requestId);
     try {
-      const response = await fetch("/api/bridge/respond", {
+      await fetchJson("/api/bridge/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requestId: request.requestId,
           result: decision,
         }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to respond");
-      }
+      }, "failed to respond");
     } catch (error) {
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message: error instanceof Error ? error.message : "unknown error",
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "unknown error");
     } finally {
       setRespondingRequestId(null);
     }
@@ -553,27 +547,17 @@ export function useBridgeSession() {
     if (!authRoutes.login || !supportsBrowserLogin || authBusy) return;
     setAuthBusy(true);
     try {
-      const response = await fetch("/api/bridge/login", {
+      const data = await fetchJson("/api/bridge/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "chatgpt" }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to start login");
-      }
+      }, "failed to start login");
       if (typeof data.authUrl === "string" && data.authUrl) {
         window.open(data.authUrl, "_blank", "noopener,noreferrer");
       }
       await refreshStatus();
     } catch (error) {
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message: error instanceof Error ? error.message : "login failed",
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "login failed");
     } finally {
       setAuthBusy(false);
     }
@@ -583,24 +567,14 @@ export function useBridgeSession() {
     if (!authRoutes.logout || !supportsBrowserLogout || authBusy) return;
     setAuthBusy(true);
     try {
-      const response = await fetch("/api/bridge/logout", {
+      await fetchJson("/api/bridge/logout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to logout");
-      }
+      }, "failed to logout");
       await refreshStatus();
     } catch (error) {
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message: error instanceof Error ? error.message : "logout failed",
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "logout failed");
     } finally {
       setAuthBusy(false);
     }
@@ -617,20 +591,10 @@ export function useBridgeSession() {
     }
     setAuthBusy(true);
     try {
-      const response = await fetch("/api/bridge/account", { method: "GET" });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to refresh account");
-      }
+      await fetchJson("/api/bridge/account", { method: "GET" }, "failed to refresh account");
       await refreshStatus();
     } catch (error) {
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message: error instanceof Error ? error.message : "refresh failed",
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "refresh failed");
     } finally {
       setAuthBusy(false);
     }
@@ -644,20 +608,10 @@ export function useBridgeSession() {
     if (rateLimitsBusy) return;
     setRateLimitsBusy(true);
     try {
-      const response = await fetch("/api/bridge/rate-limits", { method: "GET" });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error ?? "failed to refresh rate limits");
-      }
+      await fetchJson("/api/bridge/rate-limits", { method: "GET" }, "failed to refresh rate limits");
       await refreshStatus();
     } catch (error) {
-      setEvents((current) => [
-        {
-          type: "local-error",
-          message: error instanceof Error ? error.message : "rate limit refresh failed",
-        },
-        ...current,
-      ]);
+      pushLocalError(error, "rate limit refresh failed");
     } finally {
       setRateLimitsBusy(false);
     }

@@ -1,4 +1,5 @@
 import { getBridge } from "../../../../lib/bridge.js";
+import { jsonError } from "../../../../lib/bridge-http.js";
 
 export const runtime = "nodejs";
 
@@ -11,9 +12,6 @@ export async function GET(request) {
     const result = await bridge.readAccount({ refreshToken });
     return Response.json({ result, status: bridge.getStatus() });
   } catch (error) {
-    return Response.json(
-      { error: error instanceof Error ? error.message : "failed to read account" },
-      { status: 500 },
-    );
+    return jsonError(error, "failed to read account");
   }
 }

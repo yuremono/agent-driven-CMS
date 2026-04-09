@@ -1,10 +1,11 @@
 import { getBridge } from "../../../../lib/bridge.js";
+import { jsonError, readJsonBody } from "../../../../lib/bridge-http.js";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
   const bridge = getBridge();
-  const body = await request.json().catch(() => ({}));
+  const body = await readJsonBody(request);
   const requestId = body.requestId;
   const result =
     body.result ?? body.decision ?? body.response ?? body.value ?? null;
@@ -17,11 +18,6 @@ export async function POST(request) {
     const response = await bridge.respondToServerRequest(requestId, result);
     return Response.json(response);
   } catch (error) {
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : "failed to respond",
-      },
-      { status: 500 },
-    );
+    return jsonError(error, "failed to respond");
   }
 }
