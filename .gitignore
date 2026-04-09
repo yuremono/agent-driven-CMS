@@ -21,6 +21,9 @@ public/
 tasks/
 NOTE.md
 NOTE2.md
+NOTE3.md
+NOTE4.md
+NOTE5.md
 tmp/*
 !tmp/browser-checks/
 !tmp/browser-checks/.gitkeep

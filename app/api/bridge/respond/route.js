@@ -1,9 +1,9 @@
-import { getCodexBridge } from "../../../../lib/codex-bridge.js";
+import { getBridge } from "../../../../lib/bridge.js";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
-  const bridge = getCodexBridge();
+  const bridge = getBridge();
   const body = await request.json().catch(() => ({}));
   const requestId = body.requestId;
   const result =

@@ -1,4 +1,5 @@
 import "./globals.css";
+import { BridgeSessionProvider } from "./components/BridgeSessionContext.jsx";
 import DevEditorOverlay from "./components/DevEditorOverlay.jsx";
 
 export const metadata = {
@@ -10,8 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ja">
       <body className="siteBody">
-        {children}
-        {process.env.NODE_ENV === "development" ? <DevEditorOverlay /> : null}
+        <BridgeSessionProvider>
+          {children}
+          {process.env.NODE_ENV === "development" ? <DevEditorOverlay /> : null}
+        </BridgeSessionProvider>
       </body>
     </html>
   );

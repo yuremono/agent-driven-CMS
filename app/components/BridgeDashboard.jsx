@@ -6,8 +6,8 @@ import {
   formatResetAt,
   formatWindow,
   requestTitle,
-  useBridgeSession,
 } from "./useBridgeSession.js";
+import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 
 const shellClass = "shell adminShell mx-auto grid min-h-screen max-w-[1180px] gap-6";
 const heroClass =
@@ -43,9 +43,11 @@ export default function BridgeDashboard() {
   const {
     approvals,
     authBusy,
+    authHelp,
     authLabel,
     authRoutes,
     canSubmit,
+    capabilities,
     currentTurnId,
     events,
     handleApproval,
@@ -55,19 +57,30 @@ export default function BridgeDashboard() {
     handleRefreshRateLimits,
     handleSubmit,
     input,
+    modelOptions,
     planSteps,
+    provider,
+    providerLabel,
     rateLimitSummary,
     rateLimitsBusy,
     replyText,
     respondingRequestId,
+    selectedModel,
     setInput,
+    setSelectedModel,
     showAuthHelp,
     status,
     statusLabel,
     submitLabel,
+    supportsApprovals,
+    supportsBrowserLogin,
+    supportsBrowserLogout,
+    supportsDiff,
+    supportsPlan,
+    supportsRateLimits,
     turnDiff,
     turnPlan,
-  } = useBridgeSession();
+  } = useBridgeSessionContext();
 
   return (
     <main className={shellClass}>
@@ -79,7 +92,7 @@ export default function BridgeDashboard() {
           </h1>
           <p className={`max-w-[60ch] text-[1.02rem] leading-8 ${mutedClass}`}>
             公開サイトに重ねる編集 UI の裏側を確認するための管理画面です。認証状態、
-            承認待ち、diff、イベントをまとめて追えます。
+            provider 切替、承認待ち、diff、イベントをまとめて追えます。
           </p>
         </div>
 
@@ -89,17 +102,22 @@ export default function BridgeDashboard() {
               <span className={headerLabelClass}>status</span>
               <div className={`mt-1 text-base font-medium text-[#1d1712]`}>{statusLabel}</div>
             </div>
-            <button
-              type="button"
-              className={secondaryButtonClass}
-              onClick={handleRefreshRateLimits}
-              disabled={rateLimitsBusy}
-            >
-              {rateLimitsBusy ? "refreshing..." : "refresh limits"}
-            </button>
+            {supportsRateLimits ? (
+              <button
+                type="button"
+                className={secondaryButtonClass}
+                onClick={handleRefreshRateLimits}
+                disabled={rateLimitsBusy}
+              >
+                {rateLimitsBusy ? "refreshing..." : "refresh limits"}
+              </button>
+            ) : (
+              <span className={`text-sm ${mutedClass}`}>rate limits: unsupported</span>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <MetaChip>provider: {providerLabel}</MetaChip>
             <MetaChip>thread: {status.threadId ?? "none"}</MetaChip>
             <MetaChip>pid: {status.pid ?? "stopped"}</MetaChip>
             <MetaChip>auth: {authLabel}</MetaChip>
@@ -110,9 +128,11 @@ export default function BridgeDashboard() {
           <div className="grid gap-3 rounded-[22px] bg-white/65 p-4 ring-1 ring-[rgba(38,27,18,0.08)]">
             <div className="flex items-center justify-between gap-3">
               <span className={headerLabelClass}>rate limits</span>
-              <span className={`text-sm ${mutedClass}`}>{status.rateLimits ? "live" : "none"}</span>
+              <span className={`text-sm ${mutedClass}`}>
+                {supportsRateLimits ? (status.rateLimits ? "live" : "none") : "unsupported"}
+              </span>
             </div>
-            {rateLimitSummary ? (
+            {supportsRateLimits && rateLimitSummary ? (
               <>
                 <strong className="text-[#1d1712]">{rateLimitSummary.label}</strong>
                 <div className="h-2 overflow-hidden rounded-full bg-[rgba(32,77,102,0.1)]">
@@ -129,9 +149,13 @@ export default function BridgeDashboard() {
                   {formatResetAt(rateLimitSummary.resetsAt)}
                 </p>
               </>
-            ) : (
+            ) : supportsRateLimits ? (
               <p className={`m-0 text-sm leading-7 ${mutedClass}`}>
                 まだ rate limit の情報はありません。`refresh limits` で取得できます。
+              </p>
+            ) : (
+              <p className={`m-0 text-sm leading-7 ${mutedClass}`}>
+                {providerLabel} では rate limits を browser bridge から取得しません。
               </p>
             )}
           </div>
@@ -152,6 +176,22 @@ export default function BridgeDashboard() {
             placeholder="サービスページの導入文をもっと短くして"
             rows={4}
           />
+          {modelOptions.length > 0 ? (
+            <label className="grid gap-2 text-sm text-[#685f55]">
+              <span>Model</span>
+              <select
+                className="rounded-2xl border border-[rgba(38,27,18,0.1)] bg-white/75 px-4 py-3 text-[#1d1712] outline-none"
+                value={selectedModel}
+                onChange={(event) => setSelectedModel(event.target.value)}
+              >
+                {modelOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <button type="submit" className={primaryButtonClass} disabled={!canSubmit}>
             {submitLabel}
           </button>
@@ -162,22 +202,25 @@ export default function BridgeDashboard() {
         <PanelHeader title="Auth" description="認証状態と補助操作をここで確認します。" />
         <div className="mt-4 grid gap-4">
           <div className="flex flex-wrap gap-2 text-sm">
-            <MetaChip>
-              requiresOpenaiAuth:{" "}
-              {status.requiresOpenaiAuth == null ? "unknown" : String(status.requiresOpenaiAuth)}
-            </MetaChip>
+            <MetaChip>provider: {provider}</MetaChip>
             <MetaChip>authMode: {status.authMode ?? "none"}</MetaChip>
             <MetaChip>account: {status.accountEmail ?? "none"}</MetaChip>
+            <MetaChip>permission: {status.defaultPermissionMode ?? "n/a"}</MetaChip>
+            {provider === "codex" ? (
+              <MetaChip>
+                requiresOpenaiAuth:{" "}
+                {status.requiresOpenaiAuth == null ? "unknown" : String(status.requiresOpenaiAuth)}
+              </MetaChip>
+            ) : null}
           </div>
 
           {showAuthHelp ? (
             <div className="grid gap-2 rounded-[22px] bg-white/65 p-4 ring-1 ring-[rgba(38,27,18,0.08)]">
               <p className={`m-0 text-sm leading-7 ${mutedClass}`}>
-                認証が必要です。まずターミナルで `codex login` を完了してください。
+                {authHelp.description}
               </p>
               <pre className="overflow-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]">
-                {`security find-generic-password -a "$USER" -s OPENAI_API_KEY -w | codex login --with-api-key
-codex login status`}
+                {authHelp.command}
               </pre>
             </div>
           ) : null}
@@ -191,15 +234,17 @@ codex login status`}
             >
               refresh
             </button>
-            <button
-              type="button"
-              className={secondaryButtonClass}
-              onClick={handleRefreshRateLimits}
-              disabled={rateLimitsBusy}
-            >
-              rate limits
-            </button>
-            {authRoutes.login ? (
+            {supportsRateLimits ? (
+              <button
+                type="button"
+                className={secondaryButtonClass}
+                onClick={handleRefreshRateLimits}
+                disabled={rateLimitsBusy}
+              >
+                rate limits
+              </button>
+            ) : null}
+            {supportsBrowserLogin && authRoutes.login ? (
               <button
                 type="button"
                 className={secondaryButtonClass}
@@ -209,7 +254,7 @@ codex login status`}
                 login
               </button>
             ) : null}
-            {authRoutes.logout ? (
+            {supportsBrowserLogout && authRoutes.logout ? (
               <button
                 type="button"
                 className={secondaryButtonClass}
@@ -219,7 +264,11 @@ codex login status`}
                 logout
               </button>
             ) : null}
-            {authRoutes.login || authRoutes.logout || authRoutes.account ? (
+            {provider === "claude" ? (
+              <span className={`text-sm ${mutedClass}`}>
+                terminal only: `claude auth login`, `claude auth status`, `claude auth logout`
+              </span>
+            ) : authRoutes.login || authRoutes.logout || authRoutes.account ? (
               <span className={`text-sm ${mutedClass}`}>
                 routes:{" "}
                 {[
@@ -251,29 +300,39 @@ codex login status`}
         <article className={panelClass}>
           <PanelHeader title="Code Diff" description="diff と計画を同じカードで確認します。" />
           <div className="mt-4 grid gap-3">
-            <p className={`m-0 text-sm ${mutedClass}`}>
-              {turnPlan?.explanation ?? "turn diff and plan"}
-            </p>
-            {planSteps.length > 0 ? (
-              <ol className="grid gap-2">
-                {planSteps.map((step, index) => (
-                  <li
-                    key={`${step.step ?? index}-${index}`}
-                    className="flex items-start justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3"
-                  >
-                    <span className="max-w-[70%] leading-7 text-[#1d1712]">
-                      {step.step ?? "step"}
-                    </span>
-                    <strong className="shrink-0 text-sm uppercase tracking-[0.14em] text-[#214d66]">
-                      {step.status ?? "pending"}
-                    </strong>
-                  </li>
-                ))}
-              </ol>
-            ) : null}
-            <pre className="max-h-[320px] overflow-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]">
-              {turnDiff || "まだ diff はありません。"}
-            </pre>
+            {supportsDiff || supportsPlan ? (
+              <>
+                <p className={`m-0 text-sm ${mutedClass}`}>
+                  {turnPlan?.explanation ?? "turn diff and plan"}
+                </p>
+                {supportsPlan && planSteps.length > 0 ? (
+                  <ol className="grid gap-2">
+                    {planSteps.map((step, index) => (
+                      <li
+                        key={`${step.step ?? index}-${index}`}
+                        className="flex items-start justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3"
+                      >
+                        <span className="max-w-[70%] leading-7 text-[#1d1712]">
+                          {step.step ?? "step"}
+                        </span>
+                        <strong className="shrink-0 text-sm uppercase tracking-[0.14em] text-[#214d66]">
+                          {step.status ?? "pending"}
+                        </strong>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+                {supportsDiff ? (
+                  <pre className="max-h-[320px] overflow-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]">
+                    {turnDiff || "まだ diff はありません。"}
+                  </pre>
+                ) : null}
+              </>
+            ) : (
+              <p className={`m-0 text-sm leading-7 ${mutedClass}`}>
+                {providerLabel} では diff / plan ストリームを browser bridge に出しません。
+              </p>
+            )}
           </div>
         </article>
 
@@ -283,7 +342,11 @@ codex login status`}
             description="承認待ちの変更だけを一覧化します。"
           />
           <div className="mt-4 grid gap-4">
-            {approvals.length === 0 ? (
+            {!supportsApprovals ? (
+              <p className={`m-0 text-sm leading-7 ${mutedClass}`}>
+                {providerLabel} では browser approval flow を使いません。
+              </p>
+            ) : approvals.length === 0 ? (
               <p className={`m-0 text-sm leading-7 ${mutedClass}`}>承認待ちはありません。</p>
             ) : (
               approvals.map((request) => {
@@ -390,9 +453,10 @@ codex login status`}
           <PanelHeader title="Notes" description="運用時に忘れたくない前提を残します。" />
           <ul className="mt-4 grid gap-3 pl-5 text-[#685f55]">
             <li>API key は repo に置かない</li>
-            <li>認証状態は bridge 側で確認してから thread を開始する</li>
-            <li>bridge は stdio の app-server を使う</li>
+            <li>認証状態は provider ごとに bridge 側で確認してから thread を開始する</li>
+            <li>Codex は app-server、Claude は CLI を server 側で中継する</li>
             <li>ブラウザは SSE でイベントを受ける</li>
+            <li>provider の切替は browser ではなく起動時に行う</li>
           </ul>
         </article>
       </section>

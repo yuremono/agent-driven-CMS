@@ -3,6 +3,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const emptyStatus = {
+  provider: "codex",
+  providerLabel: "Codex",
+  capabilities: {
+    approvals: true,
+    browserLogin: true,
+    browserLogout: true,
+    diff: true,
+    plan: true,
+    rateLimits: true,
+  },
+  availableModels: [
+    { label: "gpt-5.4-mini", value: "gpt-5.4-mini" },
+    { label: "gpt-5.4", value: "gpt-5.4" },
+    { label: "gpt-5.3-codex", value: "gpt-5.3-codex" },
+    { label: "Auto", value: "auto" },
+  ],
+  defaultModel: "gpt-5.4-mini",
+  defaultPermissionMode: null,
   state: "idle",
   threadId: null,
   pid: null,
@@ -70,6 +88,16 @@ function createTranscriptEntry(id, role, text, status) {
   return { id, role, text, status };
 }
 
+export function createTranscriptRuntime() {
+  return {
+    nextId: 1,
+    pendingAssistantId: null,
+    assistantIdByTurnId: new Map(),
+    assistantIdByItemId: new Map(),
+    completedTurnIds: new Set(),
+  };
+}
+
 function updateEntryById(list, entryId, updater) {
   const index = list.findIndex((item) => item.id === entryId);
   if (index === -1) return list;
@@ -88,9 +116,123 @@ function getLatestAssistantText(entries) {
   return "";
 }
 
+function findLatestAssistantEntry(list, excludeComplete = false) {
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    const item = list[index];
+    if (item.role !== "assistant") continue;
+    if (item.status !== "streaming") continue;
+    if (excludeComplete && item.status === "complete") continue;
+    return item;
+  }
+  return null;
+}
+
+function resolveAssistantEntryId(runtime, conversation, turnId, itemId) {
+  if (itemId != null && runtime.assistantIdByItemId.has(itemId)) {
+    return runtime.assistantIdByItemId.get(itemId);
+  }
+  if (turnId != null && runtime.assistantIdByTurnId.has(turnId)) {
+    return runtime.assistantIdByTurnId.get(turnId);
+  }
+  if (runtime.pendingAssistantId != null) {
+    return runtime.pendingAssistantId;
+  }
+  return findLatestAssistantEntry(conversation, true)?.id ?? null;
+}
+
+function trackAssistantEntry(runtime, entryId, turnId, itemId) {
+  if (turnId != null) {
+    runtime.assistantIdByTurnId.set(turnId, entryId);
+  }
+  if (itemId != null) {
+    runtime.assistantIdByItemId.set(itemId, entryId);
+  }
+}
+
+export function beginAssistantMessage(conversation, runtime, { turnId = null, itemId = null, text = "" } = {}) {
+  if (turnId != null && runtime.completedTurnIds.has(turnId)) {
+    return conversation;
+  }
+
+  const entryId = resolveAssistantEntryId(runtime, conversation, turnId, itemId);
+  if (entryId == null) {
+    const assistantId = runtime.nextId++;
+    const nextConversation = [
+      ...conversation,
+      createTranscriptEntry(assistantId, "assistant", text, "streaming"),
+    ];
+    trackAssistantEntry(runtime, assistantId, turnId, itemId);
+    return nextConversation;
+  }
+
+  const nextConversation = updateEntryById(conversation, entryId, (entry) => ({
+    ...entry,
+    text: text || entry.text || "",
+    status: "streaming",
+  }));
+  trackAssistantEntry(runtime, entryId, turnId, itemId);
+  return nextConversation;
+}
+
+export function applyAssistantDelta(conversation, runtime, { turnId = null, itemId = null, delta = "" } = {}) {
+  if (!delta) return conversation;
+  if (turnId != null && runtime.completedTurnIds.has(turnId)) {
+    return conversation;
+  }
+
+  const entryId = resolveAssistantEntryId(runtime, conversation, turnId, itemId);
+  if (entryId == null) {
+    const assistantId = runtime.nextId++;
+    const nextConversation = [
+      ...conversation,
+      createTranscriptEntry(assistantId, "assistant", delta, "streaming"),
+    ];
+    trackAssistantEntry(runtime, assistantId, turnId, itemId);
+    return nextConversation;
+  }
+
+  const nextConversation = updateEntryById(conversation, entryId, (entry) => ({
+    ...entry,
+    text: `${entry.text ?? ""}${delta}`,
+    status: "streaming",
+  }));
+  trackAssistantEntry(runtime, entryId, turnId, itemId);
+  return nextConversation;
+}
+
+export function completeAssistantMessage(conversation, runtime, { turnId = null, itemId = null, text = "" } = {}) {
+  const entryId = resolveAssistantEntryId(runtime, conversation, turnId, itemId);
+  if (turnId != null) {
+    runtime.completedTurnIds.add(turnId);
+  }
+
+  if (entryId == null) {
+    const assistantId = runtime.nextId++;
+    const nextConversation = [
+      ...conversation,
+      createTranscriptEntry(assistantId, "assistant", text, "complete"),
+    ];
+    trackAssistantEntry(runtime, assistantId, turnId, itemId);
+    runtime.pendingAssistantId = null;
+    return nextConversation;
+  }
+
+  const nextConversation = updateEntryById(conversation, entryId, (entry) => ({
+    ...entry,
+    text: text || entry.text || "",
+    status: "complete",
+  }));
+  trackAssistantEntry(runtime, entryId, turnId, itemId);
+  if (runtime.pendingAssistantId === entryId) {
+    runtime.pendingAssistantId = null;
+  }
+  return nextConversation;
+}
+
 export function useBridgeSession() {
   const [status, setStatus] = useState(emptyStatus);
   const [input, setInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState(emptyStatus.defaultModel);
   const [sending, setSending] = useState(false);
   const [events, setEvents] = useState([]);
   const [conversation, setConversation] = useState([]);
@@ -101,8 +243,7 @@ export function useBridgeSession() {
   const [respondingRequestId, setRespondingRequestId] = useState(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [rateLimitsBusy, setRateLimitsBusy] = useState(false);
-  const transcriptIdRef = useRef(1);
-  const activeAssistantIdRef = useRef(null);
+  const transcriptRuntimeRef = useRef(createTranscriptRuntime());
   const [authRoutes, setAuthRoutes] = useState({
     account: false,
     login: false,
@@ -175,21 +316,13 @@ export function useBridgeSession() {
         const item = payload.params?.item;
         if (item?.type === "agentMessage") {
           setCurrentTurnId(payload.params?.turnId ?? null);
-          if (activeAssistantIdRef.current == null) {
-            const assistantId = transcriptIdRef.current++;
-            activeAssistantIdRef.current = assistantId;
-            setConversation((current) => [
-              ...current,
-              createTranscriptEntry(assistantId, "assistant", "", "streaming"),
-            ]);
-          } else {
-            setConversation((current) =>
-              updateEntryById(current, activeAssistantIdRef.current, (entry) => ({
-                ...entry,
-                status: "streaming",
-              })),
-            );
-          }
+          setConversation((current) =>
+            beginAssistantMessage(current, transcriptRuntimeRef.current, {
+              turnId: payload.params?.turnId ?? null,
+              itemId: item?.id ?? null,
+              text: item?.text ?? "",
+            }),
+          );
         }
         return;
       }
@@ -223,21 +356,12 @@ export function useBridgeSession() {
       if (payload.method === "item/agentMessage/delta") {
         const delta = payload.params?.delta ?? "";
         if (!delta) return;
-        if (activeAssistantIdRef.current == null) {
-          const assistantId = transcriptIdRef.current++;
-          activeAssistantIdRef.current = assistantId;
-          setConversation((current) => [
-            ...current,
-            createTranscriptEntry(assistantId, "assistant", delta, "streaming"),
-          ]);
-          return;
-        }
         setConversation((current) =>
-          updateEntryById(current, activeAssistantIdRef.current, (entry) => ({
-            ...entry,
-            text: `${entry.text ?? ""}${delta}`,
-            status: "streaming",
-          })),
+          applyAssistantDelta(current, transcriptRuntimeRef.current, {
+            turnId: payload.params?.turnId ?? null,
+            itemId: payload.params?.itemId ?? payload.params?.item?.id ?? null,
+            delta,
+          }),
         );
         return;
       }
@@ -245,23 +369,13 @@ export function useBridgeSession() {
       if (payload.method === "item/completed") {
         const item = payload.params?.item;
         if (item?.type === "agentMessage") {
-          const text = item.text ?? "";
-          if (activeAssistantIdRef.current == null) {
-            const assistantId = transcriptIdRef.current++;
-            setConversation((current) => [
-              ...current,
-              createTranscriptEntry(assistantId, "assistant", text, "complete"),
-            ]);
-          } else {
-            setConversation((current) =>
-              updateEntryById(current, activeAssistantIdRef.current, (entry) => ({
-                ...entry,
-                text,
-                status: "complete",
-              })),
-            );
-          }
-          activeAssistantIdRef.current = null;
+          setConversation((current) =>
+            completeAssistantMessage(current, transcriptRuntimeRef.current, {
+              turnId: payload.params?.turnId ?? null,
+              itemId: item?.id ?? null,
+              text: item.text ?? "",
+            }),
+          );
         }
       }
     };
@@ -272,6 +386,26 @@ export function useBridgeSession() {
     };
   }, []);
 
+  const provider = status.provider ?? "codex";
+  const providerLabel = status.providerLabel ?? (provider === "claude" ? "Claude Code" : "Codex");
+  const capabilities = status.capabilities ?? emptyStatus.capabilities;
+  const modelOptions = useMemo(() => {
+    if (Array.isArray(status.availableModels) && status.availableModels.length > 0) {
+      return status.availableModels;
+    }
+    return emptyStatus.availableModels;
+  }, [status.availableModels]);
+  const defaultModel = status.defaultModel ?? modelOptions[0]?.value ?? "auto";
+
+  useEffect(() => {
+    setSelectedModel((current) => {
+      if (modelOptions.some((option) => option.value === current)) {
+        return current;
+      }
+      return defaultModel;
+    });
+  }, [defaultModel, modelOptions]);
+
   const statusLabel = useMemo(() => {
     if (status.error) return `error: ${status.error}`;
     if (status.threadId) return "ready";
@@ -281,9 +415,10 @@ export function useBridgeSession() {
   const authLabel = useMemo(() => {
     if (status.authMode) return status.authMode;
     if (status.requiresOpenaiAuth === true) return "auth required";
+    if (provider === "claude" && status.error) return "terminal auth required";
     if (status.requiresOpenaiAuth === false) return "not required";
     return "unknown";
-  }, [status.authMode, status.requiresOpenaiAuth]);
+  }, [provider, status.authMode, status.error, status.requiresOpenaiAuth]);
 
   const rateLimitSummary = useMemo(
     () => getRateLimitSummary(status.rateLimits),
@@ -297,10 +432,30 @@ export function useBridgeSession() {
     : status.error
       ? "接続エラー"
       : status.threadId
-        ? "Codex に送る"
+        ? `${providerLabel} に送る`
         : "接続待ち...";
-  const showAuthHelp = status.requiresOpenaiAuth === true && !status.authMode;
+  const showAuthHelp =
+    (provider === "codex" && status.requiresOpenaiAuth === true && !status.authMode) ||
+    (provider === "claude" && !status.authMode);
   const replyText = useMemo(() => getLatestAssistantText(conversation), [conversation]);
+  const supportsApprovals = capabilities.approvals !== false;
+  const supportsBrowserLogin = capabilities.browserLogin !== false;
+  const supportsBrowserLogout = capabilities.browserLogout !== false;
+  const supportsDiff = capabilities.diff !== false;
+  const supportsPlan = capabilities.plan !== false;
+  const supportsRateLimits = capabilities.rateLimits !== false;
+  const authHelp = provider === "claude"
+    ? {
+        description:
+          "認証が必要です。まずターミナルで `claude auth login` を完了してください。",
+        command: "claude auth login\nclaude auth status --json",
+      }
+    : {
+        description:
+          "認証が必要です。まずターミナルで `codex login` を完了してください。",
+        command:
+          'security find-generic-password -a "$USER" -s OPENAI_API_KEY -w | codex login --with-api-key\ncodex login status',
+      };
 
   async function refreshStatus() {
     const data = await fetch("/api/bridge/status").then((res) => res.json());
@@ -315,7 +470,7 @@ export function useBridgeSession() {
       setEvents((current) => [
         {
           type: "local-error",
-          message: status.error ?? "Codex app-server がまだ ready ではありません。",
+          message: status.error ?? `${providerLabel} がまだ ready ではありません。`,
         },
         ...current,
       ]);
@@ -323,9 +478,9 @@ export function useBridgeSession() {
     }
 
     setSending(true);
-    const userId = transcriptIdRef.current++;
-    const assistantId = transcriptIdRef.current++;
-    activeAssistantIdRef.current = assistantId;
+    const userId = transcriptRuntimeRef.current.nextId++;
+    const assistantId = transcriptRuntimeRef.current.nextId++;
+    transcriptRuntimeRef.current.pendingAssistantId = assistantId;
     setConversation((current) => [
       ...current,
       createTranscriptEntry(userId, "user", value, "complete"),
@@ -335,7 +490,7 @@ export function useBridgeSession() {
       const response = await fetch("/api/bridge/turn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: value }),
+        body: JSON.stringify({ input: value, model: selectedModel }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -351,7 +506,9 @@ export function useBridgeSession() {
           status: "error",
         })),
       );
-      activeAssistantIdRef.current = null;
+      if (transcriptRuntimeRef.current.pendingAssistantId === assistantId) {
+        transcriptRuntimeRef.current.pendingAssistantId = null;
+      }
       setEvents((current) => [
         {
           type: "local-error",
@@ -393,7 +550,7 @@ export function useBridgeSession() {
   }
 
   async function handleLogin() {
-    if (!authRoutes.login || authBusy) return;
+    if (!authRoutes.login || !supportsBrowserLogin || authBusy) return;
     setAuthBusy(true);
     try {
       const response = await fetch("/api/bridge/login", {
@@ -423,7 +580,7 @@ export function useBridgeSession() {
   }
 
   async function handleLogout() {
-    if (!authRoutes.logout || authBusy) return;
+    if (!authRoutes.logout || !supportsBrowserLogout || authBusy) return;
     setAuthBusy(true);
     try {
       const response = await fetch("/api/bridge/logout", {
@@ -480,6 +637,10 @@ export function useBridgeSession() {
   }
 
   async function handleRefreshRateLimits() {
+    if (!supportsRateLimits) {
+      await refreshStatus().catch(() => {});
+      return;
+    }
     if (rateLimitsBusy) return;
     setRateLimitsBusy(true);
     try {
@@ -505,9 +666,11 @@ export function useBridgeSession() {
   return {
     approvals,
     authBusy,
+    authHelp,
     authLabel,
     authRoutes,
     canSubmit,
+    capabilities,
     currentTurnId,
     events,
     handleApproval,
@@ -517,16 +680,27 @@ export function useBridgeSession() {
     handleRefreshRateLimits,
     handleSubmit,
     input,
+    modelOptions,
     planSteps,
+    provider,
+    providerLabel,
     rateLimitSummary,
     rateLimitsBusy,
     replyText,
     respondingRequestId,
+    selectedModel,
     setInput,
+    setSelectedModel,
     showAuthHelp,
     status,
     statusLabel,
     submitLabel,
+    supportsApprovals,
+    supportsBrowserLogin,
+    supportsBrowserLogout,
+    supportsDiff,
+    supportsPlan,
+    supportsRateLimits,
     transcript: conversation,
     turnDiff,
     turnPlan,

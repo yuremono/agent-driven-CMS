@@ -1,0 +1,23 @@
+---
+flag: "large_task"
+trigger: "変更が5ファイル以上にまたがり、UI 状態管理・bridge 再同期・回帰テストを独立して並列実装しつつ worktree で分離する必要があるため。"
+task: "chat bridge stability fix via worktrees"
+status: "in_progress"
+created_at: "20260409 14:39"
+completed_at: ""
+request_description: "では引き続きGitWorks3を使って並列で改善作業を進めてください。 \nあなたは司令塔に徹してください。 \nすべての作業をサブエージェントにスポーンしてください。"
+descriptions:
+  - "[main] 既存 worktree を再利用し、統合は `feature/claude-provider` worktree、実装は UI / bridge / test の担当に分割して subagent へ委譲する方針を開始した。"
+  - "[Pauli] 既存 4 worktree を stability 修正用 branch 名へ切り替え、`feature/chat-bridge-stability` とその core/ui/docs-tests 子 branch を作成した。未コミット変更は保持し、commit や revert は行っていない。"
+  - "[main] bridge 担当と UI 担当の worker を parallel に起動し、`snapshot.replay` を共通契約にして reload 後の再同期と送信 gate 強化を実装させている。"
+  - "[Pascal] integration worktree の dirty state、Node 16 では Next.js build/test が不足し Node 18.18+ 以上が必要なこと、bridge/test 先行統合が安全であることを確認した。"
+  - "[Archimedes] docs/bridge.md と smoke-test.js を優先候補として、安定化修正後に docs/smoke で更新すべき論点を整理した。"
+  - "[Lorentz] bridge 側では `snapshot.replay` を実装し、Codex/Claude とも active turn と直近完了 turn を replay 用 event array で再構築できるようにした。Node 24 の target bridge tests は成功、全体 test の失敗は既存 shomeido 資産欠落のみと報告した。"
+  - "[main] 初回 UI worker は未着手だったため終了し、UI stability 専任 worker を再投入した。並行して integration worker に bridge 差分先行統合と target tests 実行を指示した。"
+  - "[main] NOTE3 の途中で切れて見える問題に対して、UI 側の transcript 更新を turnId ベースの純粋関数へ寄せ、delta / completed / completed-first / replay の 4 パターンを node:test で固定した。`useBridgeSession` の assistant entry は completed を最終文として確定し、遅延 delta を stale state として無視するように変更した。"
+  - "[main] DevEditorOverlay の `/admin` 限定 return を外し、全ページで同じ bridge transcript 修正が見えるようにした。[20260409 16:56]"
+  - "[main] `feature/chat-bridge-stability-root` を作成し、commit `53b975d` を origin へ push して remote tracking を設定した。[20260409 16:56]"
+  - "[main] GitHub PR #1 を main 向けに作成し、branch `feature/chat-bridge-stability-root` の変更内容と検証結果を共有した。[20260409 16:56]"
+  - "[review] `/admin` で BridgeDashboard と DevEditorOverlay が別々に useBridgeSession() を起動する二重購読の指摘を受け、BridgeSessionProvider を追加して session を共有する形に修正した。[20260409 17:18]"
+  - "[review] pendingAssistantId 経由の実運用パスを `test/useBridgeSession.transcript.test.js` に追加し、placeholder assistant entry が delta/completed を受けるケースを固定した。[20260409 17:21]"
+---

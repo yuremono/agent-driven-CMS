@@ -43,9 +43,8 @@ Codex app-server を Next.js の Node runtime 経由で中継し、ブラウザ 
 
 ## 行動原則
 
-- セッション開始直後、ユーザーが実装を依頼、taskが確定、既存taskの再開、task完了時は必ず `task-log` スキルを実行すること
+- ユーザーが実装を依頼、taskが確定、既存taskの再開、task完了時は必ず `task-log` スキルを実行すること
 - 3ステップ以上の作業は、先に方針を固めてから進める。
-- 変更は必要な箇所だけに限定する。
 - 軽微な修正では**test/buildを行わない** - build/test は、API・状態管理・bridge・認証・ロジック変更のときだけ実施する。
 
 
