@@ -55,12 +55,14 @@ function PlaceholderFigure({
   priority = false,
   ratioClass,
   align = "left",
+  figureClassName = "",
+  frameStyle,
 }) {
   const alignmentClass = align === "right" ? "md:justify-self-end" : "";
 
   return (
-    <figure className={`pageFigure group ${alignmentClass}`}>
-      <div className={`pageFigureFrame ${ratioClass}`}>
+    <figure className={`pageFigure group w-full min-w-0 ${alignmentClass} ${figureClassName}`}>
+      <div className={`pageFigureFrame ${ratioClass}`} style={frameStyle}>
         <Image
           alt={alt}
           className="object-cover transition duration-500"
@@ -104,7 +106,7 @@ export default function HomePage() {
 
       <main className="pageMain" data-page="home">
         <section className="pageArea pageHero" data-section="hero">
-          <div className="pageAreaInner pageGridTwo lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div className="pageAreaInner pageGridTwo lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
             <div className="grid gap-6">
               <p className="pageEyebrow">Company Profile</p>
               <div className="grid gap-5">
@@ -133,6 +135,9 @@ export default function HomePage() {
 
             <PlaceholderFigure
               alt="ブランドイメージの写真"
+              align="right"
+              figureClassName="pageHeroFigure"
+              frameStyle={{ borderRadius: 0 }}
               priority
               ratioClass="aspect-[4/5] min-h-[420px] w-full"
               src={heroImageSrc}

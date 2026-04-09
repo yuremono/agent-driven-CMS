@@ -15,7 +15,10 @@ pnpm-debug.log*
 .turbo/
 .cache/
 .memsearch/
+docs/
 private/
+public/
+tasks/
 NOTE.md
 NOTE2.md
 tmp/*

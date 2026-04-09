@@ -43,8 +43,10 @@ export default function ServicesPage() {
           <div className="pageAreaInner pageSection text-center">
             <p className="pageEyebrow">Services</p>
             <div className="pageMeasureLg pageGridTwo gap-4 mx-auto">
-              <h1 className='font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[clamp(2.6rem,4.8vw,4.7rem)] leading-[0.95] tracking-[-0.055em] text-[#1d1712]'>
-                事業に合わせて、伝え方をしなやかに整える。
+              <h1 className='mx-auto max-w-[10ch] font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[clamp(2.9rem,5.2vw,5rem)] leading-[0.9] tracking-[-0.075em] text-[#191410] text-balance'>
+                事業の輪郭を、
+                <br />
+                ことばと余白で整える。
               </h1>
               <p className="pageLead text-[1.05rem]">
                 企業紹介、採用、実績、問い合わせまで、目的の違うページでも一貫した印象になるように
