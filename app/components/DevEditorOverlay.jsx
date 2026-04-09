@@ -3,7 +3,7 @@
 import { CaretDown, PaperPlaneRight, Plus } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { useBridgeSession } from "./useBridgeSession.js";
+import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 
 function TranscriptMessage({ item }) {
   const isUser = item.role === "user";
@@ -64,7 +64,7 @@ export default function DevEditorOverlay() {
     setSelectedModel,
     submitLabel,
     transcript,
-  } = useBridgeSession();
+  } = useBridgeSessionContext();
   const fileInputRef = useRef(null);
   const dockRef = useRef(null);
   const transcriptViewportRef = useRef(null);

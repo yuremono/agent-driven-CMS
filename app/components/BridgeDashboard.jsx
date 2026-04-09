@@ -6,8 +6,8 @@ import {
   formatResetAt,
   formatWindow,
   requestTitle,
-  useBridgeSession,
 } from "./useBridgeSession.js";
+import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 
 const shellClass = "shell adminShell mx-auto grid min-h-screen max-w-[1180px] gap-6";
 const heroClass =
@@ -80,7 +80,7 @@ export default function BridgeDashboard() {
     supportsRateLimits,
     turnDiff,
     turnPlan,
-  } = useBridgeSession();
+  } = useBridgeSessionContext();
 
   return (
     <main className={shellClass}>

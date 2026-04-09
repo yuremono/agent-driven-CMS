@@ -18,4 +18,5 @@ descriptions:
   - "[main] DevEditorOverlay の `/admin` 限定 return を外し、全ページで同じ bridge transcript 修正が見えるようにした。[20260409 16:56]"
   - "[main] `feature/chat-bridge-stability-root` を作成し、commit `53b975d` を origin へ push して remote tracking を設定した。[20260409 16:56]"
   - "[main] GitHub PR #1 を main 向けに作成し、branch `feature/chat-bridge-stability-root` の変更内容と検証結果を共有した。[20260409 16:56]"
+  - "[review] `/admin` で BridgeDashboard と DevEditorOverlay が別々に useBridgeSession() を起動する二重購読の指摘を受け、BridgeSessionProvider を追加して session を共有する形に修正した。[20260409 17:18]"
 ---
