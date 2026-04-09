@@ -1,17 +1,9 @@
 "use client";
 
 import { CaretDown, PaperPlaneRight, Plus } from "@phosphor-icons/react";
-import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useBridgeSession } from "./useBridgeSession.js";
-
-const modelOptions = [
-        { label: "gpt-5.4-mini", value: "gpt-5.4-mini" },
-  { label: "Auto", value: "auto" },
-  { label: "gpt-5.4", value: "gpt-5.4" },
-  { label: "gpt-5.3-codex", value: "gpt-5.3-codex" },
-];
 
 function TranscriptMessage({ item }) {
   const isUser = item.role === "user";
@@ -61,18 +53,24 @@ function TranscriptLog({ style, transcript, viewportRef, onScroll }) {
 }
 
 export default function DevEditorOverlay() {
-  const pathname = usePathname();
-  const { canSubmit, handleSubmit, input, setInput, submitLabel, transcript } =
-    useBridgeSession();
+  const {
+    canSubmit,
+    handleSubmit,
+    input,
+    modelOptions,
+    providerLabel,
+    selectedModel,
+    setInput,
+    setSelectedModel,
+    submitLabel,
+    transcript,
+  } = useBridgeSession();
   const fileInputRef = useRef(null);
   const dockRef = useRef(null);
   const transcriptViewportRef = useRef(null);
   const stickToBottomRef = useRef(true);
-  const [selectedModel, setSelectedModel] = useState("gpt-5.4-mini");
   const [attachmentNames, setAttachmentNames] = useState([]);
   const [dockHeight, setDockHeight] = useState(0);
-
-  if (pathname?.startsWith("/admin")) return null;
 
   useLayoutEffect(() => {
     const node = dockRef.current;
@@ -173,27 +171,29 @@ export default function DevEditorOverlay() {
           />
 
           <div className="editorComposerActions flex shrink-0 items-center gap-2 max-md:w-full max-md:justify-end">
-            <label className="editorModelSelectWrap relative inline-flex items-center">
-              <span className="sr-only">モデルを選択</span>
-              <select
-                aria-label="モデルを選択"
-                className="editorModelSelect appearance-none rounded-full border border-[rgba(38,27,18,0.12)] bg-white/76 py-3 pl-4 pr-10 text-sm text-[#1d1712] outline-none transition focus:border-[rgba(33,77,102,0.2)] focus:bg-white"
-                value={selectedModel}
-                onChange={(event) => setSelectedModel(event.target.value)}
-              >
-                {modelOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <CaretDown
-                aria-hidden="true"
-                className="pointer-events-none absolute right-3 text-[rgba(104,95,85,0.82)]"
-                size={16}
-                weight="bold"
-              />
-            </label>
+            {modelOptions.length > 0 ? (
+              <label className="editorModelSelectWrap relative inline-flex items-center">
+                <span className="sr-only">モデルを選択</span>
+                <select
+                  aria-label="モデルを選択"
+                  className="editorModelSelect appearance-none rounded-full border border-[rgba(38,27,18,0.12)] bg-white/76 py-3 pl-4 pr-10 text-sm text-[#1d1712] outline-none transition focus:border-[rgba(33,77,102,0.2)] focus:bg-white"
+                  value={selectedModel}
+                  onChange={(event) => setSelectedModel(event.target.value)}
+                >
+                  {modelOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <CaretDown
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 text-[rgba(104,95,85,0.82)]"
+                  size={16}
+                  weight="bold"
+                />
+              </label>
+            ) : null}
 
             <button
               aria-label={submitLabel}
@@ -207,12 +207,15 @@ export default function DevEditorOverlay() {
           </div>
         </form>
 
-        {attachmentNames.length > 0 ? (
+        {attachmentNames.length > 0 || providerLabel ? (
           <div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[0.78rem] leading-6 text-[rgba(104,95,85,0.92)]">
-            <span className="inline-flex items-center rounded-full border border-[rgba(38,27,18,0.1)] bg-white/55 px-3 py-1">
-              {attachmentLabel}
-            </span>
-            <span>モデル: {selectedModel}</span>
+            {attachmentNames.length > 0 ? (
+              <span className="inline-flex items-center rounded-full border border-[rgba(38,27,18,0.1)] bg-white/55 px-3 py-1">
+                {attachmentLabel}
+              </span>
+            ) : null}
+            <span>provider: {providerLabel}</span>
+            {modelOptions.length > 0 ? <span>モデル: {selectedModel}</span> : null}
           </div>
         ) : null}
       </section>

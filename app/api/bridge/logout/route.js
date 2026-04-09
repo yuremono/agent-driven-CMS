@@ -1,4 +1,4 @@
-import { getCodexBridge } from "../../../../lib/codex-bridge.js";
+import { getBridge } from "../../../../lib/bridge.js";
 
 export const runtime = "nodejs";
 
@@ -22,7 +22,7 @@ export async function POST(request) {
   const forbidden = enforceSameOrigin(request);
   if (forbidden) return forbidden;
 
-  const bridge = getCodexBridge();
+  const bridge = getBridge();
 
   try {
     const result = await bridge.logout();

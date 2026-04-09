@@ -1,9 +1,9 @@
-import { getCodexBridge } from "../../../../lib/codex-bridge.js";
+import { getBridge } from "../../../../lib/bridge.js";
 
 export const runtime = "nodejs";
 
 export async function GET(request) {
-  const bridge = getCodexBridge();
+  const bridge = getBridge();
   const url = new URL(request.url);
   const refreshToken = url.searchParams.get("refreshToken") === "true";
 

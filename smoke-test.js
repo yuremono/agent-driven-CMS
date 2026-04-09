@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import readline from "node:readline";
 
+// Codex app-server 専用の smoke test。Claude Code は起動方式が異なるため別扱いにする。
 const proc = spawn("codex", ["app-server"], {
   stdio: ["pipe", "pipe", "inherit"],
 });

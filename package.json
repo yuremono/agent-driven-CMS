@@ -5,10 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:codex": "AGENT_BRIDGE_PROVIDER=codex next dev",
+    "dev:claude": "AGENT_BRIDGE_PROVIDER=claude next dev",
     "build": "next build",
     "start": "next start",
     "test": "node --test test/*.test.js",
-    "smoke": "node smoke-test.js"
+    "smoke": "node smoke-test.js",
+    "smoke:codex": "node smoke-test.js",
+    "smoke:claude": "node smoke-claude.js"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

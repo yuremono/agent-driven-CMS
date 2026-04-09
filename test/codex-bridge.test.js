@@ -51,9 +51,11 @@ test("bridge waits for account/read before starting the first thread", () => {
 
   assert.equal(bridge.getStatus().threadId, "thr_123");
   assert.equal(bridge.getStatus().state, "ready");
+  assert.equal(bridge.getStatus().provider, "codex");
   assert.equal(bridge.getStatus().authMode, "apikey");
   assert.equal(bridge.getStatus().requiresOpenaiAuth, true);
   assert.equal(bridge.getStatus().rateLimits.limitId, "codex");
+  assert.equal(bridge.getStatus().defaultModel, "gpt-5.4-mini");
 });
 
 test("bridge enters an auth error when account/read reports no account and auth is required", () => {
@@ -164,4 +166,34 @@ test("bridge clears thread when account/updated reports unauthenticated", () => 
   assert.equal(bridge.getStatus().authMode, null);
   assert.equal(bridge.getStatus().threadId, null);
   assert.equal(bridge.getStatus().state, "error");
+});
+
+test("bridge forwards per-turn model overrides", async () => {
+  const { bridge, sent } = createBridge();
+
+  bridge.waitForReady = async () => bridge;
+  bridge.threadId = "thr_123";
+  bridge.ready = true;
+  bridge.nextId = 7;
+
+  const prompt = bridge.submitPrompt("hello", { model: "gpt-5.4" });
+  await Promise.resolve();
+
+  assert.deepEqual(sent[0], {
+    id: 7,
+    method: "turn/start",
+    params: {
+      threadId: "thr_123",
+      input: [{ type: "text", text: "hello" }],
+      model: "gpt-5.4",
+    },
+  });
+
+  bridge.handleMessage({
+    id: 7,
+    result: { thread: { id: "thr_123" }, turn: { id: "turn_1" } },
+  });
+
+  const result = await prompt;
+  assert.equal(result.turn.id, "turn_1");
 });
