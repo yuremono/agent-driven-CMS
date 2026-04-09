@@ -1,10 +1,10 @@
 ---
 task: "publish github pages preview"
-status: "in_progress"
+status: "done"
 created_at: "20260409 20:18"
-completed_at: ""
+completed_at: "20260409 20:22"
 request_summary: "全部並列して進めてください。私が実際に確認できるところまで進めてください。"
-update_summary: "リポジトリが public になったことを確認したため、GitHub Pages の site 作成と push 反映を再試行する。"
+update_summary: "リポジトリが public になったことを確認後、GitHub Pages site を workflow 方式で作成し、`main` へ push して公開を反映した。GitHub Actions の `Deploy GitHub Pages preview` は build/deploy ともに成功し、`https://yuremono.github.io/agent-driven-CMS/`、`/services/`、`/admin/` が 200 で応答することを確認した。"
 ---
 ---
 task: "github pages public preview setup"
