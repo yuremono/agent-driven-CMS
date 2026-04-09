@@ -1,0 +1,29 @@
+CONTRIBUTING.md
+  cc484f748a2594e6 1-27
+GITWORKFLOW.md
+  cc484f748a2594e6 1-53
+tasks/20260409_chat_bridge_stability_fix_via_worktrees.yaml
+  cc484f748a2594e6 5,7,23
+AGENTS.md
+  cc484f748a2594e6 47,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.6",
+  "base_commit_sha": "8ba731555cedcfa77e84d15fb738813d563909b3",
+  "prompts": {
+    "cc484f748a2594e6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7223-9ee6-7fc2-bb08-a4a135d10a75",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 4,
+      "accepted_lines": 85,
+      "overriden_lines": 0
+    }
+  }
+}
