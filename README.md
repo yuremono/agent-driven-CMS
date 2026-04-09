@@ -9,6 +9,13 @@ npm install
 npm run dev
 ```
 
+## GitHub Pages 公開プレビュー
+
+- `npm run build:pages` で、`dist/github-pages` に公開用の静的サイトを生成します。
+- `.github/workflows/pages.yml` が `main` への push と手動実行でこの生成物を GitHub Pages に配信します。
+- 公開プレビューは静的サイトなので、`/admin` の bridge 機能はローカル開発時のみ使えます。
+- 公開先では `/` と `/services/` の見た目を確認できます。
+
 ### Provider 切替
 
 - 既定は Codex です。`npm run dev` は従来どおり Codex で起動します。
@@ -38,7 +45,7 @@ claude auth status --json
 1. 使いたい provider にログインする。
 2. Codex なら `npm run dev` か `npm run dev:codex`、Claude なら `npm run dev:claude` を起動する。
 3. ブラウザで公開サイトを開く。
-4. 開発時だけ下部に出る編集オーバーレイから指示を送る。
+4. 開発時だけ下部に出る編集チャットインプットから指示を送る。
 5. `/admin` で provider 状態を確認する。
 
 ## 認証の扱い
@@ -46,10 +53,10 @@ claude auth status --json
 - API key は `codex login --with-api-key` でローカルにだけ渡す。
 - `.env` や `NEXT_PUBLIC_` 変数に API key を置かない。
 - Codex bridge は `account/read` で認証状態を確認してから thread を開始する。
-- Codex では `account/rateLimits/read` も呼び、開発時オーバーレイに `rate limits` を表示する。
+- Codex では `account/rateLimits/read` も呼び、開発時チャットインプットに `rate limits` を表示する。
 - Claude Code は `claude auth status --json` を使って認証状態を確認する。
 - Claude の切替は起動時のみで、ブラウザから login/logout/rate limits を操作しない。
-- ブラウザ UI は公開ページ上に重なる編集オーバーレイとして表示される。
+- ブラウザ UI は公開ページ上に重なる編集チャットインプットとして表示される。
 - `/` はトップページ、`/services` はサービスページとして機能する。
 
 ## Claude v1 の制約

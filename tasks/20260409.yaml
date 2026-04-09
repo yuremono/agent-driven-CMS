@@ -1,0 +1,98 @@
+---
+task: "publish github pages preview"
+status: "in_progress"
+created_at: "20260409 20:18"
+completed_at: ""
+request_summary: "全部並列して進めてください。私が実際に確認できるところまで進めてください。"
+update_summary: "リポジトリが public になったことを確認したため、GitHub Pages の site 作成と push 反映を再試行する。"
+---
+---
+task: "github pages public preview setup"
+status: "done"
+created_at: "20260409 20:09"
+completed_at: "20260409 20:14"
+request_summary: "GitHub Pagesにデプロイしてちゃんと公開用の見た目がパブリックで見れるか確認したいので進めてください。"
+update_summary: "GitHub Pages 用に `scripts/build-github-pages.mjs` を追加し、`dist/github-pages` に `/`・`/services/`・`/admin/` の静的プレビューを生成するようにした。`.github/workflows/pages.yml` で `main` push / 手動実行時にこの成果物を Pages へ配信する構成を入れ、ローカルでは `npm run build:pages` と簡易 HTTP サーバーで見た目を確認した。"
+---
+---
+---
+task: "add git workflow guide"
+status: "done"
+created_at: "20260409 17:47"
+completed_at: "20260409 17:47"
+request_summary: "既存の CONTRIBUTING.md と AGENTS.md を踏まえた、プロジェクトルートの gitworkflow.md を作りたい。"
+update_summary: "ルートに `gitworkflow.md` を追加し、AGENTS.md の制約、CONTRIBUTING.md の流れ、worktree / PR / commit / test の運用ルールを統合して整理した。"
+---
+---
+---
+task: "translate contributing guide to japanese"
+status: "done"
+created_at: "20260409 17:47"
+completed_at: "20260409 17:47"
+request_summary: "CONTRIBUTING.md を日本人向けに日本語で書き直したい。"
+update_summary: "CONTRIBUTING.md を日本語化し、feature branch -> push -> PR -> review -> merge の標準フローを日本人向けに書き直した。"
+---
+---
+task: "add contributing guide for team flow"
+status: "done"
+created_at: "20260409 17:47"
+completed_at: "20260409 17:47"
+request_summary: "チームで回すときの標準フローを、プロジェクト直下の一般的なファイル名でまとめたい。"
+update_summary: "root に `CONTRIBUTING.md` を追加し、feature branch -> push -> PR -> review -> merge の標準フローを簡潔に記載した。"
+---
+---
+task: "sync useBridgeSession stability wiring into integration worktree"
+status: "done"
+created_at: "20260409 15:43"
+completed_at: "20260409 15:44"
+request_summary: "UI worktree の useBridgeSession.js に入った stability wiring を integration worktree の app/components/useBridgeSession.js へ同期し、一致確認を行う。"
+update_summary: "integration worktree の app/components/useBridgeSession.js を UI worktree と同一内容へ同期した。`diff -u` は exit code 0 で差分なし、integration worktree の対象変更ファイルは `app/components/useBridgeSession.js` のみで、branch は `feature/chat-bridge-stability` を確認した。"
+---
+---
+task: "worktree and branch cleanup for chat bridge stability"
+status: "done"
+created_at: "20260409 15:00"
+completed_at: "20260409 15:02"
+request_summary: "0406agent-driven-CMS 系の既存 worktree を確認し、chat bridge stability 修正用の親子 branch 名へ切り替える。"
+update_summary: "既存 worktree と各 status を確認し、integration/core/ui/docs を feature/chat-bridge-stability 系の branch 名へ `git switch -c` で切り替えた。未コミット変更は保持され、他 branch や他者変更の revert は行っていない。"
+---
+---
+task: "codex prompt and approval sound investigation"
+status: "done"
+created_at: "20260409 14:42"
+completed_at: "20260409 15:05"
+request_summary: "stop hook で鳴らしている端末音を、Codex がユーザーに許可を求めたり質問するときにも鳴らせるか調べ、可能なら実装する。"
+update_summary: "公式 Hooks/approval 仕様を確認し、承認プロンプト専用 hook は未提供と判断した一方、Stop hook の `last_assistant_message` で質問待ちは判定可能と整理。~/.codex/hooks/notify-stop-or-question.sh を追加し、Stop hook の通知先を差し替えて通常終了音と質問待ち音を分けた。"
+---
+---
+task: "chat bridge stability fix via worktrees"
+status: "in_progress"
+created_at: "20260409 14:39"
+completed_at: ""
+request_summary: "ハードリロード後の最初の 1-2 ターンが部分応答または空応答になり、3 ターン目で正常化する chat bridge の不安定挙動を、worktree とマルチエージェントで並列に改善する。"
+update_summary: "既存 worktree を活用し、司令塔は統合管理に徹して、UI セッション管理・bridge snapshot/turn 同期・回帰テストを subagent に分担させる準備を開始。"
+---
+---
+task: "chat bridge instability test plan"
+status: "done"
+created_at: "20260409 14:48"
+completed_at: "20260409 14:56"
+request_summary: "agent-driven-CMS の chat bridge 不安定化に対するテスト計画を作る。現象はハードリロード後の最初の2ターンが部分応答または空応答で、3ターン目から正常化することがある。Codex/Claude 共通前提で、ユニット・統合・手動E2Eの観点から検証すべき状態遷移を整理する。"
+update_summary: "bridge 実装、API route、既存テスト、UI の useBridgeSession を確認し、reload 後の初期化・SSE 再接続・turn 処理の状態遷移を基準に、ユニット・統合・手動E2Eのテスト計画を整理した。"
+---
+---
+task: "chat instability investigation plan"
+status: "done"
+created_at: "20260409 14:12"
+completed_at: "20260409 14:45"
+request_summary: "dev:claude と dev:codex で会話が数ターン続いた際に返答が途切れる不安定挙動があるため、原因観点を洗い出して改善プランを立てる。"
+update_summary: "ハードリロード後の 1-2 ターン欠落は、SSE 準備完了前送信、snapshot の再同期不足、turn/completed 非活用、provider 間の完了イベント不整合が主因と整理。最小修正からの段階的改善フェーズと回帰テスト案まで策定した。"
+---
+---
+task: "claude provider support via worktrees"
+status: "done"
+created_at: "20260409 13:20"
+completed_at: "20260409 13:58"
+request_summary: "Codex App Server の機能を壊さず、ローカルのプレビュー画面から Claude Code でも同様に編集できるようにする。"
+update_summary: "親統合ブランチと複数 worktree で core / ui / docs-smoke を分離して実装し、Codex 既定のまま Claude provider を起動時切替で追加した。target bridge tests は通過し、integration worktree では Node 24 で build 成功、dev:claude と dev:codex の API 状態確認、Claude turn の end-to-end 確認まで完了。その後、ユーザーの現在ディレクトリにも同じ差分を同期し、`npm run` に `dev:claude` が表示され、`npm run dev:claude` が起動することも確認した。"
+---

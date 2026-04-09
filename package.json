@@ -8,6 +8,7 @@
     "dev:codex": "AGENT_BRIDGE_PROVIDER=codex next dev",
     "dev:claude": "AGENT_BRIDGE_PROVIDER=claude next dev",
     "build": "next build",
+    "build:pages": "node scripts/build-github-pages.mjs",
     "start": "next start",
     "test": "node --test test/*.test.js",
     "smoke": "node smoke-test.js",
