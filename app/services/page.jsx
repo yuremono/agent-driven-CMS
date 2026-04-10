@@ -19,12 +19,7 @@ export default function ServicesPage() {
   return (
     <>
       <header className="pageHeader">
-        <div>
-          <p className="pageEyebrow">Northstar Studio Co., Ltd.</p>
-          <strong className="block text-lg tracking-[0.02em] text-[#1d1712]">
-            Services
-          </strong>
-        </div>
+
         <nav aria-label="Primary" className="pageNav">
           <Link className="pageNavLink" href="/">
             ホーム
@@ -39,50 +34,11 @@ export default function ServicesPage() {
       </header>
 
       <main className="pageMain" data-page="services">
-        <section className="pageArea" data-section="hero">
-          <div className="pageAreaInner pageSection text-center">
-            <p className="pageEyebrow">Services</p>
-            <div className="pageMeasureLg pageGridTwo gap-4 mx-auto">
-              <h1 className='mx-auto max-w-[10ch] font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[clamp(2.9rem,5.2vw,5rem)] leading-[0.9] tracking-[-0.075em] text-[#191410] text-balance'>
-                事業の輪郭を、
-                <br />
-                ことばと余白で整える。
-              </h1>
-              <p className="pageLead text-[1.05rem]">
-                企業紹介、採用、実績、問い合わせまで、目的の違うページでも一貫した印象になるように
-                構成と文章を整えます。
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="pageArea" data-section="capabilities">
-          <div className="pageAreaInner pageSection">
-            <div className="grid gap-2">
-              <p className="pageEyebrow">Capabilities</p>
-              <h2 className="pageSectionTitle text-[2rem]">
-                ご相談いただくことの多い内容
-              </h2>
-              <p className="pageSectionCopy text-sm">
-                立ち上げ前の整理から、公開後の運用改善まで、段階に応じて伴走します。
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {serviceCards.map((card) => (
-                <article className="grid gap-2" key={card.title}>
-                  <h3 className="text-base font-medium text-[#1d1712]">{card.title}</h3>
-                  <p className="pageRowCopy">{card.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        
       </main>
 
       <footer className="pageFooter">
-        <p className="m-0">サービス内容はご要望に合わせて、単発の制作から継続運用まで対応します。</p>
-        <p className="m-0">ご相談の段階から、伝え方と見せ方を一緒に整えます。</p>
+
       </footer>
     </>
   );

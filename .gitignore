@@ -27,3 +27,5 @@ NOTE5.md
 tmp/*
 !tmp/browser-checks/
 !tmp/browser-checks/.gitkeep
+docs/private
+

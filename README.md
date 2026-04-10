@@ -70,7 +70,7 @@ claude auth status --json
 
 - `npm run smoke` と `npm run smoke:codex` は Codex app-server 用です。
 - `npm run smoke:claude` は Claude Code へ最小プロンプトを送り、`OK` 応答を確認します。
-- Claude smoke は実 API 呼び出しになるため、認証済みであることと少額の実行コストがかかることに注意してください。
+- Claude smoke は実 API 呼び出しになるため、認証済みであることと実行コストがかかることに注意してください。
 
 ## 参照
 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 @source "./**/*.{js,jsx,ts,tsx,mdx}";
 
 :root {
@@ -7,26 +8,19 @@
   --SC: #204d66;
   --AC: #94431c;
   --BC: #f8f2e8;
-  --TC: #1d1712;
+  --second: var(--SC);
+  --third: red;
+  --fourth: blue;
+  --TC: #111;
   --GR: #aaa;
-  --BK: #0f0c0a;
+  --BK: #000;
   --WH: #ffffff;
-  --primary: var(--MC);
-  --secondary: var(--SC);
-  --accent: var(--AC);
-  --background: var(--BC);
-  --foreground: var(--TC);
-  --muted: var(--GR);
   --border: rgba(45, 35, 25, 0.11);
   --gap: clamp(1rem, 2vw, 1.5rem);
   --gapH: calc(var(--gap) / 2);
-  --wid: min(1240px, 100%);
+  --wid: 80%;
   --MY: clamp(4rem, 7vw, 6rem);
   --PX: clamp(1.25rem, 2.5vw, 2rem);
-  --editor-offset: clamp(0.75rem, 1.6vw, 1rem);
-  --editor-width: min(980px, calc(100vw - 24px));
-  --into: 0;
-  --out: 0;
 }
 
 * {
@@ -38,14 +32,13 @@ html {
 }
 
 body {
+        min-height: 100vh;
+        overflow-x: hidden;
   margin: 0;
   min-height: 100%;
   font-family: "Avenir Next", "Avenir", "Segoe UI", sans-serif;
   color: var(--TC);
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.92), transparent 40%),
-    radial-gradient(circle at right top, rgba(182, 83, 37, 0.08), transparent 22%),
-    linear-gradient(180deg, #f8f2e8, #f1e8da 52%, #e8ddcf);
+
 }
 
 a {
@@ -58,229 +51,14 @@ textarea {
   font: inherit;
 }
 
-.siteBody {
-  min-height: 100vh;
-  overflow-x: hidden;
-}
 
-.pageMain {
-  display: grid;
-  gap: 0;
-}
-
-.pageArea {
-  padding-block: var(--MY);
-  padding-inline: var(--PX);
-}
-
-.pageHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--gap);
-  padding-block: calc(var(--gap) * 0.85);
-  padding-inline: var(--PX);
-  border-bottom: 1px solid var(--border);
-}
-
-.pageFooter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem 2rem;
-  padding-block: calc(var(--gap) * 1.05);
-  padding-inline: var(--PX);
-  border-top: 1px solid var(--border);
-  color: var(--GR);
-  font-size: 0.9375rem;
-  line-height: 1.75;
-}
-
-.pageAreaInner {
-  margin-inline: auto;
-  display: grid;
-  gap: calc(var(--gap) * 2);
-}
-
-.pageHero {
-  padding-block: calc(var(--MY) * 0.9);
-  border-block: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 252, 247, 0.9), rgba(242, 232, 218, 0.94));
-}
-
-.pageGridTwo {
-  display: grid;
-  gap: calc(var(--gap) * 1.5);
-}
-
-.pageMeasure {
-}
-
-.pageMeasureLg {
-}
-
-.pageMeasureXl {
-}
-
-.pageMeasureWide {
-}
-
-.pageMeasureHero {
-}
-
-.pageNav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: calc(var(--gap) * 0.75);
-}
-
-.pageNavLink {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--GR);
-  transition: color 0.2s ease;
-}
-
-.pageNavLink:hover {
-  color: var(--TC);
-}
-
-.pageEyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--SC);
-}
-
-.pageLead {
-  color: var(--GR);
-  line-height: 2;
-}
-
-.pageHeroTitle {
-  color: var(--TC);
-  line-height: 0.92;
-  letter-spacing: -0.06em;
-}
-
-.pageLeadSm {
-  color: var(--GR);
-  line-height: 1.9;
-}
-
-.pageButtonPrimary,
-.pageButtonSecondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  padding: 0.875rem 1.25rem;
-  font-size: 0.9375rem;
-  transition: transform 0.2s ease;
-}
-
-.pageButtonPrimary {
-  background: var(--MC);
-  color: var(--WH);
-}
-
-.pageButtonSecondary {
-  border: 1px solid rgba(33, 77, 102, 0.16);
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--SC);
-}
-
-.pageButtonPrimary:hover,
-.pageButtonSecondary:hover {
-  transform: translateY(-2px);
-}
-
-.pageFigure {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.pageFigureCaption {
-  color: var(--GR);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-.pageFigureFrame {
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 2.125rem;
-  background: #e8dccd;
-}
-
-.pageHeroFigure {
-  width: 100%;
-}
-
-.pageSectionHeading {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.pageSectionTitle {
-  color: var(--TC);
-  letter-spacing: -0.05em;
-  line-height: 0.98;
-}
-
-.pageSectionCopy {
-  color: var(--GR);
-  line-height: 2;
-}
-
-.pageSection {
-  display: grid;
-  gap: calc(var(--gap) * 2);
-}
-
-.pageRow {
-  display: grid;
-  gap: 0.5rem;
-  padding-block: 1.25rem;
-  border-top: 1px solid var(--border);
-}
-
-.pageRowIndex {
-  margin: 0;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--SC);
-}
-
-.pageRowTitle {
-  margin: 0;
-  color: var(--TC);
-  font-size: 1.1rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-}
-
-.pageRowCopy {
-  margin: 0;
-  color: var(--GR);
-  line-height: 2;
-}
 
 .editorOverlay {
   position: fixed;
   left: 50%;
-  top: var(--editor-offset);
-  bottom: var(--editor-offset);
-  width: var(--editor-width);
+  top: 1rem;
+  bottom: 1rem;
+  width: var(--wid);
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -316,9 +94,7 @@ textarea {
         }
 }
 
-/* .editorTranscriptViewport {
 
-} */
 
 .editorTranscriptList {
   display: grid;

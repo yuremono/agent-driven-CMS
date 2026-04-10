@@ -67,6 +67,7 @@ export default function DevEditorOverlay() {
   } = useBridgeSessionContext();
   const fileInputRef = useRef(null);
   const dockRef = useRef(null);
+  const textareaRef = useRef(null);
   const transcriptViewportRef = useRef(null);
   const stickToBottomRef = useRef(true);
   const [attachmentNames, setAttachmentNames] = useState([]);
@@ -102,6 +103,14 @@ export default function DevEditorOverlay() {
     return () => window.cancelAnimationFrame(frame);
   }, [transcript]);
 
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [input]);
+
   function handleAttachmentClick() {
     fileInputRef.current?.click();
   }
@@ -123,12 +132,13 @@ export default function DevEditorOverlay() {
         ? attachmentNames[0]
         : `${attachmentNames.length} files attached`
       : "ファイルを添付";
+  const showComposerHint = input.trim().length === 0;
   const transcriptStyle = {
-    maxHeight: `calc(100dvh - (var(--editor-offset) * 2) - ${dockHeight}px - 0.75rem)`,
+    maxHeight: `calc(100dvh - 2rem) - ${dockHeight}px - 0.75rem)`,
   };
 
   return (
-    <div className="editorOverlay">
+    <div className="editorOverlay pointer-events-none">
       <div className="editorTranscriptRail">
         <TranscriptLog
           style={transcriptStyle}
@@ -140,12 +150,12 @@ export default function DevEditorOverlay() {
 
       <section
         ref={dockRef}
-        className="editorDock pointer-events-auto w-full rounded-[38px] border border-[rgba(38,27,18,0.1)] bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(248,242,232,0.64))] px-4 py-3 text-[#1d1712] shadow-[0_22px_72px_rgba(39,24,12,0.14)] backdrop-blur-[28px]"
+        className="editorDock pointer-events-auto w-full rounded-[38px] border border-[rgba(38,27,18,0.1)] bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(248,242,232,0.64))] px-2 py-2 text-[#1d1712] shadow-[0_22px_72px_rgba(39,24,12,0.14)] backdrop-blur-[28px]"
       >
-        <form className="flex items-center gap-2 max-md:flex-wrap" onSubmit={handleSubmit}>
+        <form className="flex items-end gap-2 max-md:flex-wrap" onSubmit={handleSubmit}>
           <button
             aria-label="ファイルを添付"
-            className="editorIconButton inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[rgba(38,27,18,0.12)] bg-white/75 text-[#1d1712] transition hover:bg-white"
+            className="editorIconButton inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[rgba(38,27,18,0.12)] bg-white/75 text-[#1d1712] transition hover:bg-white"
             onClick={handleAttachmentClick}
             type="button"
             title="ファイルを添付"
@@ -161,22 +171,31 @@ export default function DevEditorOverlay() {
             type="file"
           />
 
-          <textarea
-            aria-label="Editor prompt"
-            className="editorComposerInput  flex-1 resize-none border-0 bg-transparent px-1 py-3   outline-none placeholder:text-[--GR]"
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="レッツバイブコーディング！"
-            rows={1}
-            value={input}
-          />
+          <div className="editorComposerField relative flex-1 min-w-0">
+            <textarea
+              aria-label="Editor prompt"
+              ref={textareaRef}
+              className="editorComposerInput block w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-2 not-only-of-type: outline-none"
+              onChange={(event) => setInput(event.target.value)}
+              placeholder=""
+              rows={1}
+              value={input}
+            />
+            {showComposerHint ? (
+              <div className="w-full text-[var(--GR)] pointer-events-none absolute left-1 top-0 h-full flex flex-wrap items-center gap-1 px-1 text-[0.92rem] leading-7 ">
+                <span>レッツバイブコーディング！&nbsp;</span>
+                <span className="ml-auto leading-none">provider: {providerLabel}</span>
+              </div>
+            ) : null}
+          </div>
 
-          <div className="editorComposerActions flex shrink-0 items-center gap-2 max-md:w-full max-md:justify-end">
+          {/* <div className="editorComposerActions flex shrink-0 items-center gap-2 max-md:w-full max-md:justify-end"> */}
             {modelOptions.length > 0 ? (
               <label className="editorModelSelectWrap relative inline-flex items-center">
                 <span className="sr-only">モデルを選択</span>
                 <select
                   aria-label="モデルを選択"
-                  className="editorModelSelect appearance-none rounded-full border border-[rgba(38,27,18,0.12)] bg-white/76 py-3 pl-4 pr-10 text-sm text-[#1d1712] outline-none transition focus:border-[rgba(33,77,102,0.2)] focus:bg-white"
+                  className="editorModelSelect appearance-none rounded-full border border-[rgba(38,27,18,0.12)] bg-white/76 min-h-10 pl-4 pr-10 text-sm text-[#1d1712] outline-none transition focus:border-[rgba(33,77,102,0.2)] focus:bg-white"
                   value={selectedModel}
                   onChange={(event) => setSelectedModel(event.target.value)}
                 >
@@ -197,25 +216,23 @@ export default function DevEditorOverlay() {
 
             <button
               aria-label={submitLabel}
-              className="editorSendButton inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-[#0f0c0a] text-white transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-65"
+              className="editorSendButton inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0f0c0a] text-white transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-65"
               disabled={!canSubmit}
               title={submitLabel}
               type="submit"
             >
               <PaperPlaneRight size={18} weight="fill" />
             </button>
-          </div>
+          {/* </div> */}
         </form>
 
-        {attachmentNames.length > 0 || providerLabel ? (
+        {attachmentNames.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[0.78rem] leading-6 text-[rgba(104,95,85,0.92)]">
             {attachmentNames.length > 0 ? (
               <span className="inline-flex items-center rounded-full border border-[rgba(38,27,18,0.1)] bg-white/55 px-3 py-1">
                 {attachmentLabel}
               </span>
             ) : null}
-            <span>provider: {providerLabel}</span>
-            {modelOptions.length > 0 ? <span>モデル: {selectedModel}</span> : null}
           </div>
         ) : null}
       </section>
