@@ -1,1 +1,0 @@
-@~/.codex/skills/task-large/SKILL.md
