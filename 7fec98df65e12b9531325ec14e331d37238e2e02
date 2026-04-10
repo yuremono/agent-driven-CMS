@@ -1,0 +1,36 @@
+app/globals.css
+  653693cd6a172943 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "7fec98df65e12b9531325ec14e331d37238e2e02",
+  "prompts": {
+    "5187dc8d8561df12": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9f452472-faa8-4389-a37e-59fcb7c400d5",
+        "model": "composer-2-fast"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "653693cd6a172943": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d77b8-7320-72a0-a076-4e76719343a3",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
