@@ -137,7 +137,7 @@ export function readWidRatio(host) {
   return normalizeRatio(rawValue, RING_VISIBLE_RATIO_FALLBACK);
 }
 
-// いまのスクロール位置を、縦 4 セクションのどこにいるかへ変換する。
+// いまのスクロール位置を、現在のセクション総数に対する進行度へ変換する。
 export function measureScrollState(host, sectionCount) {
   const viewportHeight = window.innerHeight || MIN_CANVAS_SIZE;
   const hostTop = host.getBoundingClientRect().top + window.scrollY;

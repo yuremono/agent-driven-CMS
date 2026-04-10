@@ -4,20 +4,20 @@ import { useEffect, useRef } from "react";
 
 import {
   AC,
-  CENTER_RATIO,
-  DEFAULT_DPR,
+  BC,
   BK,
   GR,
+  SC,
+  CENTER_RATIO,
+  DEFAULT_DPR,
   MIN_CANVAS_SIZE,
   MC,
   ORIGIN,
   RING_OUTER_RADIUS_RATIO,
   RING_ROTATION_OFFSET,
   ROTATION_DIRECTION,
-  SC,
   SEGMENT_SPAN,
   TAU,
-  TC,
   SHADOW_BLUR,
   SHADOW_OFFSET_Y,
   TEST_SEGMENT_OPACITY,
@@ -38,84 +38,83 @@ const LOOP_COPY_COUNT = 3;
 const LOOP_MIDDLE_COPY_INDEX = 1;
 const DEFAULT_SECTION_CLASS_NAME = " min-h-[100lvh] content-center";
 const DEFAULT_CONTENT_CLASS_NAME = "grid gap-[var(--gap)]";
+const DEBUG_SEGMENT_POSITIONS = [
+  "absolute right-0 top-0 h-1/2 w-1/2",
+  "absolute right-0 bottom-0 h-1/2 w-1/2",
+  "absolute left-0 bottom-0 h-1/2 w-1/2",
+  "absolute left-0 top-0 h-1/2 w-1/2",
+];
 
-// 1〜4 の区画に対応する色。既存の CSS 変数をそのまま参照する。
-const SEGMENTS = [
+// リング自体は常に 4 分割のまま扱う。
+const RING_SEGMENTS = [
   { id: "1", colorVar: MC },
   { id: "2", colorVar: SC },
   { id: "3", colorVar: AC },
-  { id: "4", colorVar: GR },
+  { id: "4", colorVar: BC },
 ];
 
-// 無限スクロールのために同じ 4 セクションを 3 回描画する。
+// スクロール本文はこの配列だけを増減させればよい。
+const SECTIONS = [
+  {
+    id: "1",
+    eyebrow: "section 1",
+    title: "輪郭を読む",
+    body: "最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。",
+  },
+  {
+    id: "2",
+    eyebrow: "section 2",
+    title: "位相をずらす",
+    body: "1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。",
+  },
+  {
+    id: "3",
+    eyebrow: "section 3",
+    title: "膜を重ねる",
+    body: "3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。",
+  },
+  {
+    id: "4",
+    eyebrow: "section 4",
+    title: "循環へ戻す",
+    body: "4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。",
+    note: "下へ進むほど、背景の 90 度が次の面へ移る。",
+  },
+  {
+    id: "5",
+    eyebrow: "section 5",
+    body: "4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。",
+  },
+];
+
+// 無限スクロールのために同じセクション群を 3 回描画する。
 function SectionCopy({ copyIndex }) {
   const isVisibleCopy = copyIndex === LOOP_MIDDLE_COPY_INDEX;
 
   return (
     <div aria-hidden={!isVisibleCopy}>
-      <section className={DEFAULT_SECTION_CLASS_NAME}>
-        <div className={DEFAULT_CONTENT_CLASS_NAME}>
-          <p className="text-[0.7rem] uppercase tracking-[0.28em]">
-            section 1
-          </p>
-          <h2
-            className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]"
-          >
-            輪郭を読む
-          </h2>
-          <p className="text-[0.98rem] leading-8" >
-            最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。
-          </p>
-        </div>
-      </section>
-      <section className={DEFAULT_SECTION_CLASS_NAME}>
-        <div className={DEFAULT_CONTENT_CLASS_NAME}>
-          <p className="text-[0.7rem] uppercase tracking-[0.28em]" >
-            section 2
-          </p>
-          <h2
-            className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]"
-          >
-            位相をずらす
-          </h2>
-          <p className="text-[0.98rem] leading-8" >
-            1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。
-          </p>
-        </div>
-      </section>
-      <section className={DEFAULT_SECTION_CLASS_NAME}>
-        <div className={DEFAULT_CONTENT_CLASS_NAME}>
-          <p className="text-[0.7rem] uppercase tracking-[0.28em]" >
-            section 3
-          </p>
-          <h2
-            className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]"
-          >
-            膜を重ねる
-          </h2>
-          <p className="text-[0.98rem] leading-8" >
-            3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。
-          </p>
-        </div>
-      </section>
-      <section className={DEFAULT_SECTION_CLASS_NAME}>
-        <div className={DEFAULT_CONTENT_CLASS_NAME}>
-          <p className="text-[0.7rem] uppercase tracking-[0.28em]" >
-            section 4
-          </p>
-          <h2
-            className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]"
-          >
-            循環へ戻す
-          </h2>
-          <p className="text-[0.98rem] leading-8" >
-            4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。
-          </p>
-          <div className="pt-6 text-sm" >
-            下へ進むほど、背景の 90 度が次の面へ移る。
+      {SECTIONS.map((section) => (
+        <section key={`${copyIndex}-${section.id}`} className={DEFAULT_SECTION_CLASS_NAME}>
+          <div className={DEFAULT_CONTENT_CLASS_NAME}>
+            <p className="text-[0.7rem] uppercase tracking-[0.28em]">
+              {section.eyebrow}
+            </p>
+            {section.title ? (
+              <h2 className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]">
+                {section.title}
+              </h2>
+            ) : null}
+            <p className="text-[0.98rem] leading-8">
+              {section.body}
+            </p>
+            {section.note ? (
+              <div className="pt-6 text-sm">
+                {section.note}
+              </div>
+            ) : null}
           </div>
-        </div>
-      </section>
+        </section>
+      ))}
     </div>
   );
 }
@@ -145,13 +144,15 @@ export default function RingScrollShowcase() {
       const { width, height, dpr } = sizeRef.current;
       if (!width || !height) return;
 
+      const sectionCount = SECTIONS.length;
+      const ringSegmentCount = RING_SEGMENTS.length;
       const palette = readShowcasePalette();
       const widRatio = readWidRatio(host);
-      const { sectionProgress } = measureScrollState(host, SEGMENTS.length);
-      const phaseProgress = offsetSectionProgress(sectionProgress, SEGMENTS.length);
+      const { sectionProgress } = measureScrollState(host, sectionCount);
+      const phaseProgress = offsetSectionProgress(sectionProgress, ringSegmentCount);
       const progress = wrapAngle(phaseProgress * SEGMENT_SPAN) / TAU;
       const rotation = RING_ROTATION_OFFSET + phaseProgress * SEGMENT_SPAN * ROTATION_DIRECTION;
-      const ringSegments = SEGMENTS.map((segment) => ({
+      const ringSegments = RING_SEGMENTS.map((segment) => ({
         ...segment,
         color: palette[segment.colorVar],
       }));
@@ -190,7 +191,7 @@ export default function RingScrollShowcase() {
       const width = window.innerWidth;
       const height = window.innerHeight;
       const dpr = window.devicePixelRatio || DEFAULT_DPR;
-      const cycleHeight = height * SEGMENTS.length;
+      const cycleHeight = height * SECTIONS.length;
       sizeRef.current = {
         width,
         height,
@@ -254,22 +255,13 @@ export default function RingScrollShowcase() {
           className="absolute overflow-hidden rounded-full"
           style={{ transformOrigin: "50% 50%" }}
         >
-          <div
-            className="absolute right-0 top-0 h-1/2 w-1/2"
-            style={{ backgroundColor: `var(${SEGMENTS[0].colorVar})`, opacity: TEST_SEGMENT_OPACITY }}
-          />
-          <div
-            className="absolute right-0 bottom-0 h-1/2 w-1/2"
-            style={{ backgroundColor: `var(${SEGMENTS[1].colorVar})`, opacity: TEST_SEGMENT_OPACITY }}
-          />
-          <div
-            className="absolute left-0 bottom-0 h-1/2 w-1/2"
-            style={{ backgroundColor: `var(${SEGMENTS[2].colorVar})`, opacity: TEST_SEGMENT_OPACITY }}
-          />
-          <div
-            className="absolute left-0 top-0 h-1/2 w-1/2"
-            style={{ backgroundColor: `var(${SEGMENTS[3].colorVar})`, opacity: TEST_SEGMENT_OPACITY }}
-          />
+          {RING_SEGMENTS.map((segment, index) => (
+            <div
+              key={segment.id}
+              className={DEBUG_SEGMENT_POSITIONS[index]}
+              style={{ backgroundColor: `var(${segment.colorVar})`, opacity: TEST_SEGMENT_OPACITY }}
+            />
+          ))}
           <div
             className="absolute left-1/2 top-1/2 rounded-full"
             style={{
