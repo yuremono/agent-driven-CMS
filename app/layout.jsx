@@ -1,6 +1,5 @@
 import "./globals.css";
-import { BridgeSessionProvider } from "./components/BridgeSessionContext.jsx";
-import DevEditorOverlay from "./components/DevEditorOverlay.jsx";
+import RootClientShell from "./components/RootClientShell.jsx";
 
 export const metadata = {
   title: "Northstar Studio",
@@ -11,10 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ja">
       <body className="siteBody">
-        <BridgeSessionProvider>
-          {children}
-          {process.env.NODE_ENV === "development" ? <DevEditorOverlay /> : null}
-        </BridgeSessionProvider>
+        <RootClientShell>{children}</RootClientShell>
       </body>
     </html>
   );
