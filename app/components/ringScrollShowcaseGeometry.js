@@ -1,12 +1,13 @@
-// トップページで使う、既存の CSS 変数名をそのまま参照する。
-export const MC = "--MC";
-export const SC = "--SC";
-export const AC = "--AC";
-export const BC = "--BC";
-export const TC = "--TC";
-export const GR = "--GR";
-export const BK = "--BK";
-export const WH = "--WH";
+// --- Canvas / テーマ用 CSS 変数名（:root の --MC などと対応）---
+export const MC = "--MC"; // メインカラー（ドーナツの扇形 1）
+export const SC = "--SC"; // セカンダリ（扇形 2）
+export const AC = "--AC"; // アクセント（扇形 3）
+export const BC = "--BC"; // ベース背景色（扇形 4・本文まわりで参照）
+export const TC = "--TC"; // テキスト色
+export const GR = "--GR"; // グレー（スクロールバー等）
+export const BK = "--BK"; // 黒（パレット解決用。キャンバス背景には使わない）
+export const WH = "--WH"; // 白（パレット解決用）
+export const TR = "--TR"; // トランスペアレント／下地：ドーナツ4扇「以外」のキャンバス塗り
 
 // 座標や描画の基準になる共通値。
 export const ORIGIN = 0;
@@ -15,14 +16,12 @@ export const CENTER_RATIO = 0.5;
 export const MIN_CANVAS_SIZE = 1;
 export const DEFAULT_DPR = 1;
 
-// 影やリングの見え方を決める定数。
-export const SHADOW_BLUR = 24;
-export const SHADOW_OFFSET_Y = 8;
+// リングの幾何（扇の色は RING_SEGMENTS の CSS 変数）。
 export const RING_OUTER_RADIUS_RATIO = 1;
 export const RING_HOLE_RADIUS_RATIO = 0.2;
 export const RING_ROTATION_OFFSET = -(Math.PI * HALF_RATIO);
 export const RING_VISIBLE_RATIO_FALLBACK = 1 - RING_HOLE_RADIUS_RATIO;
-export const TEST_SEGMENT_OPACITY = 0.3;
+export const TEST_SEGMENT_OPACITY = 0;
 export const WID_CSS_VAR = "--wid";
 
 // 角度とスクロールの単位を作るための定数。
@@ -33,20 +32,7 @@ export const TAU = Math.PI * FULL_TURN_MULTIPLIER;
 export const SEGMENT_SPAN = TAU / SEGMENT_COUNT;
 export const SCROLL_PHASE_OFFSET_SECTIONS = 0.5;
 
-// 背景のグラデーションや光の輪に使う比率。
-export const COLOR_STOP_START = 0;
-export const COLOR_STOP_MIDDLE = 0.45;
-export const COLOR_STOP_END = 1;
-export const GLOW_CENTER_X_RATIO = 0.8;
-export const GLOW_CENTER_Y_RATIO = 0.2;
-export const GRADIENT_MIN_RADIUS = 0;
-export const GLOW_RADIUS_RATIO = 0.65;
-export const SHADOW_CENTER_X_RATIO = 0.24;
-export const SHADOW_CENTER_Y_RATIO = 0.52;
-export const SHADOW_RADIUS_RATIO = 0.34;
-export const SHADOW_SHIFT_RATIO = 0.03;
-export const SHADOW_STOP_MIDDLE = 0.35;
-
+/** 文字列の色を RGB に分解（toRgba 用） */
 function parseCssColor(color) {
   if (typeof color !== "string") return null;
 
@@ -79,6 +65,7 @@ function parseCssColor(color) {
   return { r, g, b };
 }
 
+/** 解決済み色文字列にアルファを付与（将来の装飾用） */
 export function toRgba(color, alpha) {
   const rgb = parseCssColor(color);
   if (!rgb) return typeof color === "string" ? color : "transparent";
@@ -111,7 +98,7 @@ function normalizeRatio(value, fallback) {
   return Math.min(1, Math.max(0, numeric));
 }
 
-// 扇形を塗りつぶすための最小単位。
+// ドーナツの各 90° 扇形を塗る（色は segments[].color = 解決済みの --MC 等）。
 function drawSegmentBand(ctx, cx, cy, innerRadius, outerRadius, startAngle, endAngle, fillStyle) {
   const startCos = Math.cos(startAngle);
   const startSin = Math.sin(startAngle);
@@ -180,46 +167,88 @@ export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
   }
 }
 
-// Canvas 背景のベース、光、影を順番に重ねる。
-export function drawBackground(ctx, width, height, progress, palette) {
-  const background = ctx.createLinearGradient(ORIGIN, ORIGIN, width, height);
-  background.addColorStop(COLOR_STOP_START, palette[BC]);
-  background.addColorStop(COLOR_STOP_MIDDLE, palette[WH]);
-  background.addColorStop(COLOR_STOP_END, palette[BC]);
-  ctx.fillStyle = background;
-  ctx.fillRect(ORIGIN, ORIGIN, width, height);
-
-  const glow = ctx.createRadialGradient(
-    width * GLOW_CENTER_X_RATIO,
-    height * GLOW_CENTER_Y_RATIO,
-    GRADIENT_MIN_RADIUS,
-    width * GLOW_CENTER_X_RATIO,
-    height * GLOW_CENTER_Y_RATIO,
-    Math.max(width, height) * GLOW_RADIUS_RATIO,
-  );
-  glow.addColorStop(COLOR_STOP_START, toRgba(palette[MC], 0.14));
-  glow.addColorStop(COLOR_STOP_MIDDLE, toRgba(palette[MC], 0.04));
-  glow.addColorStop(COLOR_STOP_END, toRgba(palette[MC], 0));
-  ctx.fillStyle = glow;
-  ctx.fillRect(ORIGIN, ORIGIN, width, height);
-
-  const shadowShift = Math.sin(progress * TAU) * width * SHADOW_SHIFT_RATIO;
-  const shadow = ctx.createRadialGradient(
-    width * SHADOW_CENTER_X_RATIO + shadowShift,
-    height * SHADOW_CENTER_Y_RATIO,
-    GRADIENT_MIN_RADIUS,
-    width * SHADOW_CENTER_X_RATIO + shadowShift,
-    height * SHADOW_CENTER_Y_RATIO,
-    Math.max(width, height) * SHADOW_RADIUS_RATIO,
-  );
-  shadow.addColorStop(COLOR_STOP_START, toRgba(palette[BK], 0.14));
-  shadow.addColorStop(SHADOW_STOP_MIDDLE, toRgba(palette[BK], 0.07));
-  shadow.addColorStop(COLOR_STOP_END, toRgba(palette[BK], 0));
-  ctx.fillStyle = shadow;
+/**
+ * キャンバス全体の下地。ドーナツ 4 扇以外は単色 `--TR`（線形／放射グラデーションは使わない）。
+ */
+export function drawBackground(ctx, width, height, palette) {
+  ctx.fillStyle = palette[TR];
   ctx.fillRect(ORIGIN, ORIGIN, width, height);
 }
 
-// 4 区画を塗りつぶしの扇形として描く。
+// Canvas の drawSegmentBand と同じドーナツ扇形を SVG path の d にする（マスク用）。
+function fmtPathCoord(value) {
+  if (!Number.isFinite(value)) return "0";
+  const rounded = Number(value.toFixed(4));
+  return Object.is(rounded, -0) ? "0" : String(rounded);
+}
+
+/**
+ * @param {number} cx - 扇の中心 x（リングローカル座標）
+ * @param {number} cy - 扇の中心 y
+ * @param {number} innerRadius - 内半径
+ * @param {number} outerRadius - 外半径
+ * @param {number} startAngle - ラジアン（drawRing 内の未回転座標系）
+ * @param {number} endAngle - ラジアン
+ */
+export function getRingSectorSvgPathD(cx, cy, innerRadius, outerRadius, startAngle, endAngle) {
+  const startCos = Math.cos(startAngle);
+  const startSin = Math.sin(startAngle);
+  const endCos = Math.cos(endAngle);
+  const endSin = Math.sin(endAngle);
+
+  const x0 = cx + startCos * innerRadius;
+  const y0 = cy + startSin * innerRadius;
+  const x1 = cx + startCos * outerRadius;
+  const y1 = cy + startSin * outerRadius;
+  const x2 = cx + endCos * outerRadius;
+  const y2 = cy + endSin * outerRadius;
+  const x3 = cx + endCos * innerRadius;
+  const y3 = cy + endSin * innerRadius;
+
+  // 外周: Canvas arc と同様に時計回り (sweep 1)。内周: anticlockwise 相当 (sweep 0)。
+  return [
+    `M ${fmtPathCoord(x0)} ${fmtPathCoord(y0)}`,
+    `L ${fmtPathCoord(x1)} ${fmtPathCoord(y1)}`,
+    `A ${fmtPathCoord(outerRadius)} ${fmtPathCoord(outerRadius)} 0 0 1 ${fmtPathCoord(x2)} ${fmtPathCoord(y2)}`,
+    `L ${fmtPathCoord(x3)} ${fmtPathCoord(y3)}`,
+    `A ${fmtPathCoord(innerRadius)} ${fmtPathCoord(innerRadius)} 0 0 0 ${fmtPathCoord(x0)} ${fmtPathCoord(y0)}`,
+    "Z",
+  ].join(" ");
+}
+
+/**
+ * リングの各セクタ用 SVG path（index 0..segmentCount-1）。角度は drawRing と同じ基準。
+ */
+export function getRingSectorSvgPathDs(cx, cy, innerRadius, outerRadius, segmentCount) {
+  const span = TAU / segmentCount;
+  return Array.from({ length: segmentCount }, (_, index) => {
+    const startAngle = index * span;
+    const endAngle = startAngle + span;
+    return getRingSectorSvgPathD(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
+  });
+}
+
+/**
+ * ビューポート座標系（Canvas と同じ cx, cy）で、drawRing と同じく rotation を扇の角に加えたマスク用 path。
+ * 動画を fixed 全画面に置くときはラッパを回転させず、この配列だけ更新する。
+ */
+export function getViewportRingSectorSvgPathDs(
+  cx,
+  cy,
+  innerRadius,
+  outerRadius,
+  segmentCount,
+  rotation,
+) {
+  const span = TAU / segmentCount;
+  return Array.from({ length: segmentCount }, (_, index) => {
+    const startAngle = rotation + index * span;
+    const endAngle = rotation + (index + 1) * span;
+    return getRingSectorSvgPathD(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
+  });
+}
+
+// 4 区画を塗りつぶしの扇形として描く（各 segment.color は --MC〜--BC の解決値）。
 export function drawRing(ctx, cx, cy, outerRadius, innerRadius, rotation, segments) {
   ctx.save();
   ctx.translate(cx, cy);
@@ -232,7 +261,7 @@ export function drawRing(ctx, cx, cy, outerRadius, innerRadius, rotation, segmen
   ctx.restore();
 }
 
-// CSS 変数から、canvas 用に解決済みの色パレットを作る。
+// CSS 変数から、canvas 用に解決済みの色パレットを作る（getPropertyValue で実色の文字列が入る）。
 export function readShowcasePalette() {
   const rootStyle = window.getComputedStyle(document.documentElement);
 
@@ -245,5 +274,6 @@ export function readShowcasePalette() {
     [GR]: rootStyle.getPropertyValue(GR).trim(),
     [BK]: rootStyle.getPropertyValue(BK).trim(),
     [WH]: rootStyle.getPropertyValue(WH).trim(),
+    [TR]: rootStyle.getPropertyValue(TR).trim(),
   };
 }

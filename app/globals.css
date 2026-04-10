@@ -4,15 +4,17 @@
 
 :root {
   color-scheme: light;
-  --MC: #b65325;
-  --SC: #204d66;
-  --AC: #94431c;
-  --BC: #f8f2e8;
+  /* --- テーマ色（Canvas は readShowcasePalette で参照。ドーナツ4扇は --MC〜--BC）--- */
+  --TR: transparent; /* キャンバス背景・穴まわり：4扇以外の塗り */
+  --MC: #b65325; /* 扇形1 */
+  --SC: #204d66; /* 扇形2 */
+  --AC: #94431c; /* 扇形3 */
+  --BC: #f8f2e8; /* 扇形4・ページ下地 */
   --second: var(--SC);
   --third: red;
   --fourth: blue;
-  --TC: #111;
-  --GR: #aaa;
+  --TC: #111; /* 本文テキスト */
+  --GR: #aaa; /* スクロールバー等 */
   --BK: #000;
   --WH: #ffffff;
   --border: rgba(45, 35, 25, 0.11);
@@ -37,7 +39,7 @@ body {
   margin: 0;
   min-height: 100%;
   font-family: "Avenir Next", "Avenir", "Segoe UI", sans-serif;
-  color: var(--TC);
+  color: var(--TC); /* 既定の文字色（--TC） */
 
 }
 
@@ -73,7 +75,8 @@ textarea {
   justify-content: flex-end;
   border: 1px solid rgba(38, 27, 18, 0.1);
   border-radius: 32px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 242, 232, 0.64));
+  /* 単色（旧グラデーション廃止） */
+  background: var(--BC);
   color: var(--TC);
   box-shadow: 0 22px 72px rgba(39, 24, 12, 0.14);
   backdrop-filter: blur(28px);
