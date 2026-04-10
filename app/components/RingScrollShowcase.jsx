@@ -25,6 +25,7 @@ import {
   drawBackground,
   drawRing,
   measureScrollState,
+  offsetSectionProgress,
   readWidRatio,
   readShowcasePalette,
   recenterInfiniteScroll,
@@ -147,8 +148,9 @@ export default function RingScrollShowcase() {
       const palette = readShowcasePalette();
       const widRatio = readWidRatio(host);
       const { sectionProgress } = measureScrollState(host, SEGMENTS.length);
-      const progress = wrapAngle(sectionProgress * SEGMENT_SPAN) / TAU;
-      const rotation = RING_ROTATION_OFFSET + sectionProgress * SEGMENT_SPAN * ROTATION_DIRECTION;
+      const phaseProgress = offsetSectionProgress(sectionProgress, SEGMENTS.length);
+      const progress = wrapAngle(phaseProgress * SEGMENT_SPAN) / TAU;
+      const rotation = RING_ROTATION_OFFSET + phaseProgress * SEGMENT_SPAN * ROTATION_DIRECTION;
       const ringSegments = SEGMENTS.map((segment) => ({
         ...segment,
         color: palette[segment.colorVar],
@@ -179,7 +181,8 @@ export default function RingScrollShowcase() {
         debugRing.style.height = `${ringSize}px`;
         debugRing.style.transform = `rotate(${rotation}rad)`;
         debugRing.style.setProperty(WID_CSS_VAR, `${widRatio * 100}%`);
-        debugRing.dataset.progress = `${sectionProgress}`;
+        debugRing.dataset.sectionProgress = `${sectionProgress}`;
+        debugRing.dataset.progress = `${phaseProgress}`;
       }
     };
 

@@ -31,6 +31,7 @@ const SEGMENT_COUNT = 4;
 export const ROTATION_DIRECTION = -1;
 export const TAU = Math.PI * FULL_TURN_MULTIPLIER;
 export const SEGMENT_SPAN = TAU / SEGMENT_COUNT;
+export const SCROLL_PHASE_OFFSET_SECTIONS = 0.5;
 
 // 背景のグラデーションや光の輪に使う比率。
 export const COLOR_STOP_START = 0;
@@ -148,6 +149,20 @@ export function measureScrollState(host, sectionCount) {
     localScroll,
     sectionProgress: localScroll / viewportHeight,
   };
+}
+
+function wrapSectionProgress(value, sectionCount) {
+  const wrapped = value % sectionCount;
+  return wrapped < ORIGIN ? wrapped + sectionCount : wrapped;
+}
+
+// スクロールの基準点を、セクションの開始ではなく見せたい位相へずらす。
+export function offsetSectionProgress(
+  sectionProgress,
+  sectionCount,
+  offsetSections = SCROLL_PHASE_OFFSET_SECTIONS,
+) {
+  return wrapSectionProgress(sectionProgress + offsetSections, sectionCount);
 }
 
 // 無限スクロール用に、中央コピーの範囲へスクロール位置を戻す。
