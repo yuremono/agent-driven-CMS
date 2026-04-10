@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   AC,
@@ -24,6 +24,7 @@ import {
   WID_CSS_VAR,
   drawBackground,
   drawRing,
+  getVideoPhaseStep,
   measureScrollState,
   offsetSectionProgress,
   readWidRatio,
@@ -32,6 +33,7 @@ import {
   toRgba,
   wrapAngle,
 } from "./ringScrollShowcaseGeometry.js";
+import VideoRingOverlay from "./VideoRingOverlay.jsx";
 
 const SHOWCASE_TITLE = "位相で巡るスクロールリング";
 const LOOP_COPY_COUNT = 3;
@@ -124,11 +126,19 @@ export default function RingScrollShowcase() {
   const hostRef = useRef(null);
   const debugRingRef = useRef(null);
   const frameRef = useRef(ORIGIN);
+  const overlayStateRef = useRef(null);
   const sizeRef = useRef({
     width: ORIGIN,
     height: ORIGIN,
     dpr: DEFAULT_DPR,
     cycleHeight: MIN_CANVAS_SIZE,
+  });
+  const [videoOverlayState, setVideoOverlayState] = useState({
+    innerSize: ORIGIN,
+    left: ORIGIN,
+    ringSize: ORIGIN,
+    top: ORIGIN,
+    videoStep: ORIGIN,
   });
 
   useEffect(() => {
@@ -150,6 +160,7 @@ export default function RingScrollShowcase() {
       const widRatio = readWidRatio(host);
       const { sectionProgress } = measureScrollState(host, sectionCount);
       const phaseProgress = offsetSectionProgress(sectionProgress, ringSegmentCount);
+      const videoStep = getVideoPhaseStep(phaseProgress, ringSegmentCount);
       const progress = wrapAngle(phaseProgress * SEGMENT_SPAN) / TAU;
       const rotation = RING_ROTATION_OFFSET + phaseProgress * SEGMENT_SPAN * ROTATION_DIRECTION;
       const ringSegments = RING_SEGMENTS.map((segment) => ({
@@ -164,6 +175,26 @@ export default function RingScrollShowcase() {
       const outerRadius = width * RING_OUTER_RADIUS_RATIO;
       const innerRadius = width * (1 - widRatio);
       const ringCenterY = height * CENTER_RATIO;
+      const ringSize = outerRadius * 2;
+      const nextOverlayState = {
+        innerSize: Math.round(innerRadius * 2),
+        left: Math.round(-outerRadius),
+        ringSize: Math.round(ringSize),
+        top: Math.round(ringCenterY - outerRadius),
+        videoStep,
+      };
+      const previousOverlayState = overlayStateRef.current;
+      if (
+        !previousOverlayState ||
+        previousOverlayState.innerSize !== nextOverlayState.innerSize ||
+        previousOverlayState.left !== nextOverlayState.left ||
+        previousOverlayState.ringSize !== nextOverlayState.ringSize ||
+        previousOverlayState.top !== nextOverlayState.top ||
+        previousOverlayState.videoStep !== nextOverlayState.videoStep
+      ) {
+        overlayStateRef.current = nextOverlayState;
+        setVideoOverlayState(nextOverlayState);
+      }
 
       ctx.shadowColor = toRgba(palette[BK], 0.07);
       ctx.shadowBlur = SHADOW_BLUR;
@@ -249,6 +280,14 @@ export default function RingScrollShowcase() {
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <canvas ref={canvasRef} className="block h-full w-full" />
       </div>
+      <VideoRingOverlay
+        innerSize={videoOverlayState.innerSize}
+        left={videoOverlayState.left}
+        ringSegmentCount={RING_SEGMENTS.length}
+        ringSize={videoOverlayState.ringSize}
+        top={videoOverlayState.top}
+        videoStep={videoOverlayState.videoStep}
+      />
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           ref={debugRingRef}

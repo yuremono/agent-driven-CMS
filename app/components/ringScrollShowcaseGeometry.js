@@ -165,6 +165,12 @@ export function offsetSectionProgress(
   return wrapSectionProgress(sectionProgress + offsetSections, sectionCount);
 }
 
+// 45 度ごとの動画切り替えに使うステップ値。
+export function getVideoPhaseStep(phaseProgress, ringSegmentCount) {
+  const normalized = wrapSectionProgress(phaseProgress, ringSegmentCount);
+  return Math.floor(normalized * 2) % (ringSegmentCount * 2);
+}
+
 // 無限スクロール用に、中央コピーの範囲へスクロール位置を戻す。
 export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
   if (!cycleHeight) return;
