@@ -1,0 +1,27 @@
+app/globals.css
+  5187dc8d8561df12 7-12,16-17,42,78-79
+app/components/ringScrollShowcaseGeometry.js
+  5187dc8d8561df12 1-10,35,101,170-174,251,264,277
+app/components/RingScrollShowcase.jsx
+  5187dc8d8561df12 44,184,352,362
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "73d3adbe10da5d933f55f0f57d26117dcdd0576e",
+  "prompts": {
+    "5187dc8d8561df12": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9f452472-faa8-4389-a37e-59fcb7c400d5",
+        "model": "composer-2-fast"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 98,
+      "accepted_lines": 36,
+      "overriden_lines": 9
+    }
+  }
+}
