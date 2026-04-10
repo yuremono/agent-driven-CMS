@@ -1,5 +1,12 @@
 
 ---
+task: "opening animation progress overlay"
+status: "done"
+created_at: "20260410 18:30"
+completed_at: "20260410 23:29"
+request_summary: "動画読み込み進捗を中央に表示し、完了後にリングを画面中央から左端中央へ移動させてから既存の扇状 reveal へつなぐ。"
+responce_summary: "動画の部分進捗を中央表示し、完了後は数字をフェードアウトしつつリングを中央から左端中央へ移動してから既存の reveal を開始するように復元した。`npm test` は成功、`npm run build` は既存の /api/bridge/respond の ESM/CJS 問題で停止した。"
+---
 task: "add learning log rule"
 status: "done"
 created_at: "20260410 00:02"

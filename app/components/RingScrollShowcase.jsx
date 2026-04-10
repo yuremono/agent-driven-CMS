@@ -55,6 +55,7 @@ const RING_SEGMENTS = [
 export const DEFAULT_SHOWCASE_SECTIONS = [
 	{
 		id: "1",
+		locator: "ContourSection",
 		eyebrow: "section 1",
 		title: "輪郭を読む",
 		body: "最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。",
@@ -62,6 +63,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 	},
 	{
 		id: "2",
+		locator: "PhaseSection",
 		eyebrow: "section 2",
 		title: "位相をずらす",
 		body: "1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。",
@@ -69,6 +71,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 	},
 	{
 		id: "3",
+		locator: "LayerSection",
 		eyebrow: "section 3",
 		title: "膜を重ねる",
 		body: "3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。",
@@ -76,6 +79,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 	},
 	{
 		id: "4",
+		locator: "LoopSection",
 		eyebrow: "section 4",
 		title: "循環へ戻す",
 		body: "4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。",
@@ -89,9 +93,10 @@ function SectionCopy({ copyIndex, sections }) {
 	const isVisibleCopy = copyIndex === LOOP_MIDDLE_COPY_INDEX;
 
 	return (
-		<div aria-hidden={!isVisibleCopy}>
+		<div data-l={`SectionGroup${copyIndex + 1}`} aria-hidden={!isVisibleCopy}>
 			{sections.map((section) => (
 				<section
+					data-l={`${section.locator}${copyIndex + 1}`}
 					key={`${copyIndex}-${section.id}`}
 					className={DEFAULT_SECTION_CLASS_NAME}
 				>
@@ -320,6 +325,7 @@ export default function RingScrollShowcase({
 				{SHOWCASE_TITLE}
 			</h1>
 			<div
+				data-l="CanvasLayer"
 				aria-hidden="true"
 				className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
 			>
@@ -336,16 +342,19 @@ export default function RingScrollShowcase({
 				viewportWidth={videoOverlayState.viewportWidth}
 			/>
 			<div
+				data-l="DebugLayer"
 				aria-hidden="true"
 				className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
 			>
 				<div
+					data-l="DebugRing"
 					ref={debugRingRef}
 					className="absolute overflow-hidden rounded-full"
 					style={{ transformOrigin: "50% 50%" }}
 				>
 					{RING_SEGMENTS.map((segment, index) => (
 						<div
+							data-l={`DebugSegment${index + 1}`}
 							key={segment.id}
 							className={DEBUG_SEGMENT_POSITIONS[index]}
 							style={{
@@ -356,6 +365,7 @@ export default function RingScrollShowcase({
 						/>
 					))}
 					<div
+						data-l="DebugHole"
 						className="absolute left-1/2 top-1/2 rounded-full"
 						style={{
 							// ドーナツの穴（中央の円）。本番は Canvas 上の扇と重ねるデバッグ用。
@@ -367,7 +377,10 @@ export default function RingScrollShowcase({
 					/>
 				</div>
 			</div>
-			<article className="relative z-10 ml-auto w-[var(--wid)] px-[var(--PX)]">
+			<article
+				data-l="ContentRail"
+				className="relative z-10 ml-auto w-[var(--wid)] px-[var(--PX)]"
+			>
 				{Array.from({ length: LOOP_COPY_COUNT }).map((_, copyIndex) => (
 					<SectionCopy
 						key={`copy-${copyIndex}`}

@@ -10,7 +10,18 @@ import {
   useState,
 } from "react";
 
-import { getRingSectorSvgPathD, TAU } from "./ringScrollShowcaseGeometry.js";
+import {
+  clampUnit,
+  getOpeningRingCenter,
+  getRingSectorSvgPathD,
+  TAU,
+} from "./ringScrollShowcaseGeometry.js";
+import {
+  getLoadPercent,
+  getTimedLoadPercent,
+  hasAllSectorsReady,
+  isVideoReadyForOpening,
+} from "./videoRingOverlayProgress.js";
 
 const DEFAULT_MEDIA_ITEMS = [
   { src: "/video/001.mp4", kind: "video" },
@@ -19,11 +30,33 @@ const DEFAULT_MEDIA_ITEMS = [
   { src: "/video/004.mp4", kind: "video" },
 ];
 
-const REVEAL_MS = 2750;
+const MIN_LOADING_MS = 1000;
+const RELOCATE_MS = 1000;
+const REVEAL_MS = 2000;
 
 function easeOutCubic(t) {
   const x = 1 - t;
   return 1 - x * x * x;
+}
+
+function getVideoLoadProgress(video) {
+  if (!(video instanceof HTMLVideoElement)) return 0;
+
+  const duration = Number(video.duration);
+  if (Number.isFinite(duration) && duration > 0 && video.buffered.length > 0) {
+    try {
+      const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+      return clampUnit(bufferedEnd / duration);
+    } catch {
+      // buffered range can disappear while a new range is being appended.
+    }
+  }
+
+  if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) return 1;
+  if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return 0.75;
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return 0.5;
+  if (video.readyState >= HTMLMediaElement.HAVE_METADATA) return 0.15;
+  return 0;
 }
 
 const VideoRingOverlay = forwardRef(function VideoRingOverlay(
@@ -41,44 +74,90 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   const maskPathRefs = useRef([]);
   const loaderStrokePathRefs = useRef([]);
   const geometryRef = useRef(null);
+  const openingPhaseRef = useRef("loading");
   const revealProgressRef = useRef(0);
-  const allReadyRef = useRef(false);
   const revealDoneRef = useRef(false);
   const revealRafRef = useRef(null);
   const revealStartRef = useRef(0);
-  const pendingRevealRef = useRef(false);
+  const relocateProgressRef = useRef(0);
+  const relocateRafRef = useRef(null);
+  const relocateStartRef = useRef(0);
+  const pendingStartRef = useRef(false);
   const videoRefs = useRef([]);
   const imgRefs = useRef([]);
   const sectorReadyRef = useRef([]);
+  const sectorLoadProgressRef = useRef([]);
+  const rawLoadPercentRef = useRef(0);
+  const displayLoadPercentRef = useRef(0);
+  const loadDisplayRafRef = useRef(null);
+  const loadingStartRef = useRef(0);
   const reactId = useId();
   const maskIdBase = `vring-${reactId.replace(/:/g, "")}`;
 
+  const [openingPhase, setOpeningPhase] = useState("loading");
+  const [loadPercent, setLoadPercent] = useState(0);
+  const [displayLoadPercent, setDisplayLoadPercent] = useState(0);
   const [showLoadingStroke, setShowLoadingStroke] = useState(true);
+  const [loadingTextOpacity, setLoadingTextOpacity] = useState(1);
 
   const mediaCount = Math.max(1, mediaItems.length);
   const mediaSrcKey = mediaItems.map((m) => `${m.src}:${m.kind ?? "video"}`).join("|");
+
+  const setOpeningPhaseState = useCallback((nextPhase) => {
+    openingPhaseRef.current = nextPhase;
+    setOpeningPhase(nextPhase);
+  }, []);
+
+  const getCurrentRingCenter = useCallback(() => {
+    const currentPhase = openingPhaseRef.current;
+    const progress =
+      currentPhase === "loading"
+        ? 0
+        : currentPhase === "relocating" || currentPhase === "revealing" || currentPhase === "done"
+          ? relocateProgressRef.current
+          : 1;
+
+    return getOpeningRingCenter(
+      viewportWidth,
+      viewportHeight,
+      ringCenterY,
+      progress,
+    );
+  }, [ringCenterY, viewportHeight, viewportWidth]);
+
+  const setDisplayLoadPercentState = useCallback((nextPercent) => {
+    displayLoadPercentRef.current = nextPercent;
+    setDisplayLoadPercent(nextPercent);
+  }, []);
+
+  const updateLoadPercent = useCallback(() => {
+    const nextPercent = getLoadPercent(
+      sectorLoadProgressRef.current.slice(0, ringSegmentCount),
+    );
+    rawLoadPercentRef.current = nextPercent;
+    setLoadPercent(nextPercent);
+  }, [ringSegmentCount]);
+
+  const commitLoadProgress = useCallback(
+    (sectorIndex, nextProgress) => {
+      sectorLoadProgressRef.current[sectorIndex] = clampUnit(nextProgress);
+      updateLoadPercent();
+    },
+    [updateLoadPercent],
+  );
 
   const updateMaskAndLoaderPaths = useCallback(() => {
     const geom = geometryRef.current;
     if (!geom) return;
 
-    const {
-      cx,
-      cy,
-      innerRadius,
-      outerRadius,
-      rotation,
-      segmentCount,
-    } = geom;
+    const { innerRadius, outerRadius, rotation, segmentCount } = geom;
     const span = TAU / segmentCount;
+    const ringCenter = getCurrentRingCenter();
+    const currentPhase = openingPhaseRef.current;
 
     let revealT = 0;
-    if (allReadyRef.current) {
-      if (revealDoneRef.current) {
-        revealT = 1;
-      } else {
-        revealT = revealProgressRef.current;
-      }
+    if (currentPhase === "revealing" || currentPhase === "done") {
+      revealT = revealDoneRef.current ? 1 : revealProgressRef.current;
     }
 
     const effectiveOuter =
@@ -89,8 +168,8 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       const startAngle = rotation + i * span;
       const endAngle = rotation + (i + 1) * span;
       const dMask = getRingSectorSvgPathD(
-        cx,
-        cy,
+        ringCenter.cx,
+        ringCenter.cy,
         innerRadius,
         effectiveOuter,
         startAngle,
@@ -99,8 +178,8 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       maskPathRefs.current[i]?.setAttribute("d", dMask);
 
       const dStroke = getRingSectorSvgPathD(
-        cx,
-        cy,
+        ringCenter.cx,
+        ringCenter.cy,
         innerRadius,
         outerRadius,
         startAngle,
@@ -108,7 +187,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       );
       loaderStrokePathRefs.current[i]?.setAttribute("d", dStroke);
     }
-  }, []);
+  }, [getCurrentRingCenter]);
 
   const stopRevealAnimation = useCallback(() => {
     if (revealRafRef.current != null) {
@@ -117,15 +196,34 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     }
   }, []);
 
+  const stopRelocateAnimation = useCallback(() => {
+    if (relocateRafRef.current != null) {
+      cancelAnimationFrame(relocateRafRef.current);
+      relocateRafRef.current = null;
+    }
+  }, []);
+
+  const stopLoadDisplayAnimation = useCallback(() => {
+    if (loadDisplayRafRef.current != null) {
+      cancelAnimationFrame(loadDisplayRafRef.current);
+      loadDisplayRafRef.current = null;
+    }
+  }, []);
+
   const runRevealAnimation = useCallback(() => {
     stopRevealAnimation();
+
     const reducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    setShowLoadingStroke(false);
+    setOpeningPhaseState("revealing");
+
     if (reducedMotion) {
       revealProgressRef.current = 1;
       revealDoneRef.current = true;
+      setOpeningPhaseState("done");
       updateMaskAndLoaderPaths();
       return;
     }
@@ -141,43 +239,104 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       } else {
         revealDoneRef.current = true;
         revealRafRef.current = null;
+        setOpeningPhaseState("done");
       }
     };
     revealRafRef.current = requestAnimationFrame(tick);
-  }, [stopRevealAnimation, updateMaskAndLoaderPaths]);
+  }, [setOpeningPhaseState, stopRevealAnimation, updateMaskAndLoaderPaths]);
 
-  const checkAllSectorsReady = useCallback(() => {
-    const ready = sectorReadyRef.current;
-    for (let i = 0; i < ringSegmentCount; i += 1) {
-      if (!ready[i]) return false;
-    }
-    return true;
-  }, [ringSegmentCount]);
+  const runRelocateAnimation = useCallback(() => {
+    stopRelocateAnimation();
 
-  const tryStartReveal = useCallback(() => {
-    if (allReadyRef.current || !checkAllSectorsReady()) return;
-    allReadyRef.current = true;
-    setShowLoadingStroke(false);
-    revealProgressRef.current = 0;
-    revealDoneRef.current = false;
-    if (!geometryRef.current) {
-      pendingRevealRef.current = true;
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    setOpeningPhaseState("relocating");
+
+    if (reducedMotion) {
+      relocateProgressRef.current = 1;
+      setLoadingTextOpacity(0);
+      updateMaskAndLoaderPaths();
+      runRevealAnimation();
       return;
     }
-    pendingRevealRef.current = false;
-    runRevealAnimation();
-  }, [checkAllSectorsReady, runRevealAnimation]);
+
+    relocateStartRef.current = performance.now();
+    const tick = (now) => {
+      const elapsed = now - relocateStartRef.current;
+      const t = Math.min(1, elapsed / RELOCATE_MS);
+      const eased = easeOutCubic(t);
+      relocateProgressRef.current = eased;
+      setLoadingTextOpacity(1 - eased);
+      updateMaskAndLoaderPaths();
+      if (t < 1) {
+        relocateRafRef.current = requestAnimationFrame(tick);
+      } else {
+        relocateProgressRef.current = 1;
+        relocateRafRef.current = null;
+        setLoadingTextOpacity(0);
+        runRevealAnimation();
+      }
+    };
+    relocateRafRef.current = requestAnimationFrame(tick);
+  }, [runRevealAnimation, setOpeningPhaseState, stopRelocateAnimation, updateMaskAndLoaderPaths]);
+
+  const checkAllSectorsReady = useCallback(() => {
+    return hasAllSectorsReady(sectorReadyRef.current, ringSegmentCount);
+  }, [ringSegmentCount]);
+
+  const tryStartOpeningSequence = useCallback(() => {
+    updateLoadPercent();
+    if (!checkAllSectorsReady()) return;
+    if (displayLoadPercentRef.current < 100) return;
+    if (!geometryRef.current) {
+      pendingStartRef.current = true;
+      return;
+    }
+    if (openingPhaseRef.current !== "loading") return;
+    pendingStartRef.current = false;
+    runRelocateAnimation();
+  }, [checkAllSectorsReady, runRelocateAnimation, updateLoadPercent]);
+
+  const markSectorReady = useCallback(
+    (sectorIndex) => {
+      if (sectorReadyRef.current[sectorIndex]) return;
+      sectorReadyRef.current[sectorIndex] = true;
+      sectorLoadProgressRef.current[sectorIndex] = 1;
+      updateLoadPercent();
+      tryStartOpeningSequence();
+    },
+    [tryStartOpeningSequence, updateLoadPercent],
+  );
 
   const resetLoadState = useCallback(() => {
     stopRevealAnimation();
-    pendingRevealRef.current = false;
-    allReadyRef.current = false;
+    stopRelocateAnimation();
+    stopLoadDisplayAnimation();
+    pendingStartRef.current = false;
     revealDoneRef.current = false;
     revealProgressRef.current = 0;
+    relocateProgressRef.current = 0;
     sectorReadyRef.current = Array.from({ length: ringSegmentCount }, () => false);
+    sectorLoadProgressRef.current = Array.from({ length: ringSegmentCount }, () => 0);
+    rawLoadPercentRef.current = 0;
+    displayLoadPercentRef.current = 0;
+    loadingStartRef.current = typeof performance !== "undefined" ? performance.now() : 0;
+    setOpeningPhaseState("loading");
+    setLoadPercent(0);
+    setDisplayLoadPercent(0);
+    setLoadingTextOpacity(1);
     setShowLoadingStroke(true);
     updateMaskAndLoaderPaths();
-  }, [ringSegmentCount, stopRevealAnimation, updateMaskAndLoaderPaths]);
+  }, [
+    ringSegmentCount,
+    setOpeningPhaseState,
+    stopLoadDisplayAnimation,
+    stopRevealAnimation,
+    stopRelocateAnimation,
+    updateMaskAndLoaderPaths,
+  ]);
 
   useImperativeHandle(
     ref,
@@ -196,17 +355,13 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
         }
         geometryRef.current = payload;
         updateMaskAndLoaderPaths();
-        if (
-          pendingRevealRef.current &&
-          allReadyRef.current &&
-          !revealDoneRef.current
-        ) {
-          pendingRevealRef.current = false;
-          runRevealAnimation();
+        if (pendingStartRef.current && openingPhaseRef.current === "loading") {
+          pendingStartRef.current = false;
+          runRelocateAnimation();
         }
       },
     }),
-    [runRevealAnimation, updateMaskAndLoaderPaths],
+    [runRelocateAnimation, updateMaskAndLoaderPaths],
   );
 
   useEffect(() => {
@@ -219,26 +374,28 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       if (item?.kind === "image") {
         const img = imgRefs.current[i];
         if (img?.complete && img.naturalWidth > 0) {
-          sectorReadyRef.current[i] = true;
+          markSectorReady(i);
         }
       } else {
         const video = videoRefs.current[i];
-        if (
-          video instanceof HTMLVideoElement &&
-          video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
-        ) {
-          sectorReadyRef.current[i] = true;
+        if (video instanceof HTMLVideoElement) {
+          if (isVideoReadyForOpening(video.readyState)) {
+            markSectorReady(i);
+          } else {
+            commitLoadProgress(i, getVideoLoadProgress(video));
+          }
         }
       }
     }
-    tryStartReveal();
-  }, [mediaItems, mediaCount, ringSegmentCount, tryStartReveal]);
+  }, [commitLoadProgress, markSectorReady, mediaItems, mediaCount, ringSegmentCount]);
 
   useEffect(() => {
     return () => {
+      stopLoadDisplayAnimation();
       stopRevealAnimation();
+      stopRelocateAnimation();
     };
-  }, [stopRevealAnimation]);
+  }, [stopLoadDisplayAnimation, stopRevealAnimation, stopRelocateAnimation]);
 
   useEffect(() => {
     videoRefs.current.forEach((node) => {
@@ -259,148 +416,245 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     onLayoutReady?.();
   }, [viewportWidth, viewportHeight, innerSize, onLayoutReady]);
 
-  if (!viewportWidth || !viewportHeight) return null;
+  useEffect(() => {
+    updateMaskAndLoaderPaths();
+  }, [loadingTextOpacity, openingPhase, updateMaskAndLoaderPaths]);
+
+  useEffect(() => {
+    if (openingPhase !== "loading") {
+      stopLoadDisplayAnimation();
+      return;
+    }
+
+    const shouldAnimate =
+      displayLoadPercentRef.current < loadPercent ||
+      (loadPercent >= 100 && displayLoadPercentRef.current < 100);
+
+    if (!shouldAnimate) {
+      if (loadPercent >= 100 && displayLoadPercentRef.current >= 100) {
+        tryStartOpeningSequence();
+      }
+      return;
+    }
+
+    const tick = (now) => {
+      if (!loadingStartRef.current) {
+        loadingStartRef.current = now;
+      }
+
+      const nextPercent = getTimedLoadPercent(
+        rawLoadPercentRef.current,
+        now - loadingStartRef.current,
+        MIN_LOADING_MS,
+      );
+
+      setDisplayLoadPercentState(nextPercent);
+
+      const shouldContinue =
+        openingPhaseRef.current === "loading" &&
+        (nextPercent < rawLoadPercentRef.current ||
+          (rawLoadPercentRef.current >= 100 && nextPercent < 100));
+
+      if (shouldContinue) {
+        loadDisplayRafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      loadDisplayRafRef.current = null;
+      if (nextPercent >= 100) {
+        tryStartOpeningSequence();
+      }
+    };
+
+    if (loadDisplayRafRef.current == null) {
+      loadDisplayRafRef.current = requestAnimationFrame(tick);
+    }
+  }, [
+    loadPercent,
+    openingPhase,
+    setDisplayLoadPercentState,
+    stopLoadDisplayAnimation,
+    tryStartOpeningSequence,
+  ]);
+
+  const progressLabel = `${displayLoadPercent}%`;
+  const openingVisible = openingPhase !== "done";
+  const loadingTextVisible = openingVisible && (openingPhase === "loading" || loadingTextOpacity > 0);
+  const loadingOverlayOpacity =
+    openingPhase === "loading" ? 1 : clampUnit(loadingTextOpacity);
+  const loadingTextShift = (1 - loadingOverlayOpacity) * -36;
+  const canRenderMedia = viewportWidth > 0 && viewportHeight > 0;
+  const ringCenter = canRenderMedia
+    ? getCurrentRingCenter()
+    : { cx: 0, cy: 0 };
+  const holeX = ringCenter.cx - innerSize / 2;
+  const holeY = ringCenter.cy - innerSize / 2;
 
   return (
-    <div
-      aria-hidden="true"
-      className="SVGwrap pointer-events-none fixed inset-0 z-[1] overflow-hidden"
-    >
-      <style>
-        {`
-          @keyframes vring-loader-dash {
-            to {
-              stroke-dashoffset: -120;
-            }
-          }
-          .vring-loader-stroke-anim path {
-            animation: vring-loader-dash 1.2s linear infinite;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .vring-loader-stroke-anim path {
-              animation: none;
-            }
-          }
-        `}
-      </style>
-      <svg
-        aria-hidden
-        className="pointer-events-none fixed left-0 top-0 block"
-        height={viewportHeight}
-        width={viewportWidth}
-      >
-        <defs>
-          {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => (
-            <mask
-              key={`mask-${sectorIndex}`}
-              height={viewportHeight}
-              id={`${maskIdBase}-s${sectorIndex}`}
-              maskContentUnits="userSpaceOnUse"
-              maskUnits="userSpaceOnUse"
-              width={viewportWidth}
-              x={0}
-              y={0}
-            >
-              <rect fill="black" height={viewportHeight} width={viewportWidth} x={0} y={0} />
-              <path
-                ref={(node) => {
-                  maskPathRefs.current[sectorIndex] = node;
-                }}
-                fill="white"
-              />
-            </mask>
-          ))}
-        </defs>
-        {showLoadingStroke ? (
-          <g
-            className="vring-loader-stroke-anim text-white/70"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-          >
-            {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => (
-              <path
-                key={`loader-${sectorIndex}`}
-                ref={(node) => {
-                  loaderStrokePathRefs.current[sectorIndex] = node;
-                }}
-                strokeDasharray="14 22"
-                strokeDashoffset={0}
-              />
-            ))}
-          </g>
-        ) : null}
-      </svg>
-      {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => {
-        const item = mediaItems[sectorIndex % mediaCount] ?? mediaItems[0];
-        const maskRef = `url(#${maskIdBase}-s${sectorIndex})`;
-        const isImage = item?.kind === "image";
-
-        const markReady = () => {
-          sectorReadyRef.current[sectorIndex] = true;
-          tryStartReveal();
-        };
-
-        return (
-          <div
-            key={`sector-${sectorIndex}`}
-            className="pointer-events-none fixed inset-0"
-            style={{
-              height: "100vh",
-              maskImage: maskRef,
-              maskRepeat: "no-repeat",
-              maskSize: `${viewportWidth}px ${viewportHeight}px`,
-              width: "100vw",
-              WebkitMaskImage: maskRef,
-              WebkitMaskRepeat: "no-repeat",
-              WebkitMaskSize: `${viewportWidth}px ${viewportHeight}px`,
-            }}
-          >
-            {isImage ? (
-              <img
-                alt=""
-                className="h-full w-full object-cover"
-                ref={(node) => {
-                  imgRefs.current[sectorIndex] = node;
-                }}
-                src={item.src}
-                onLoad={markReady}
-              />
-            ) : (
-              <video
-                autoPlay
-                className="h-full w-full object-cover"
-                loop
-                muted
-                playsInline
-                preload="auto"
-                ref={(node) => {
-                  videoRefs.current[sectorIndex] = node;
-                }}
-                src={item.src}
-                onCanPlayThrough={markReady}
-              />
-            )}
-          </div>
-        );
-      })}
-      {innerSize > 0 ? (
+    <>
+      {openingVisible ? (
         <div
-          className="pointer-events-none fixed rounded-full"
-          style={{
-            // ドーナツの穴を覆う円。動画の上に載せて中央を隠す（色は --TR）
-            backgroundColor: "var(--TR)",
-            height: `${innerSize}px`,
-            left: 0,
-            top: `${ringCenterY}px`,
-            transform: "translate(-50%, -50%)",
-            width: `${innerSize}px`,
-          }}
-        />
+          data-l="LoadingLayer"
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-[120] bg-[var(--WH)] transition-opacity duration-700 ease-out"
+          style={{ opacity: loadingOverlayOpacity }}
+        >
+          <div data-l="LoadingStage" className="relative h-full w-full">
+            {loadingTextVisible ? (
+              <div
+                data-l="LoadingValue"
+                className="absolute left-1/2 top-1/2 text-[clamp(2.5rem,6vw,5.75rem)] italic leading-none tracking-[-0.06em] text-[var(--TC)] transition-[transform,opacity] duration-700 ease-out"
+                style={{
+                  opacity: loadingOverlayOpacity,
+                  transform: `translate(-50%, -50%) translateX(${loadingTextShift}vw)`,
+                }}
+              >
+                {progressLabel}
+              </div>
+            ) : null}
+          </div>
+        </div>
       ) : null}
-    </div>
+      {canRenderMedia ? (
+        <div
+          data-l="VideoRingLayer"
+          aria-hidden="true"
+          className="SVGwrap pointer-events-none fixed inset-0 z-[1] overflow-hidden"
+        >
+          <svg
+            aria-hidden
+            className="pointer-events-none fixed left-0 top-0 block"
+            height={viewportHeight}
+            width={viewportWidth}
+          >
+            <defs>
+              {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => (
+                <mask
+                  key={`mask-${sectorIndex}`}
+                  height={viewportHeight}
+                  id={`${maskIdBase}-s${sectorIndex}`}
+                  maskContentUnits="userSpaceOnUse"
+                  maskUnits="userSpaceOnUse"
+                  width={viewportWidth}
+                  x={0}
+                  y={0}
+                >
+                  <rect fill="black" height={viewportHeight} width={viewportWidth} x={0} y={0} />
+                  <path
+                    ref={(node) => {
+                      maskPathRefs.current[sectorIndex] = node;
+                    }}
+                    fill="white"
+                  />
+                </mask>
+              ))}
+            </defs>
+            {/* {showLoadingStroke ? (
+              <g
+                className="vring-loader-stroke-anim text-white/70"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              >
+                {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => (
+                  <path
+                    key={`loader-${sectorIndex}`}
+                    ref={(node) => {
+                      loaderStrokePathRefs.current[sectorIndex] = node;
+                    }}
+                    strokeDasharray="14 22"
+                    strokeDashoffset={0}
+                  />
+                ))}
+              </g>
+            ) : null} */}
+          </svg>
+          {Array.from({ length: ringSegmentCount }).map((_, sectorIndex) => {
+            const item = mediaItems[sectorIndex % mediaCount] ?? mediaItems[0];
+            const maskRef = `url(#${maskIdBase}-s${sectorIndex})`;
+            const isImage = item?.kind === "image";
+
+            const markReady = () => {
+              markSectorReady(sectorIndex);
+            };
+
+            const markProgress = (event) => {
+              const video = event.currentTarget;
+              if (isVideoReadyForOpening(video.readyState)) {
+                markSectorReady(sectorIndex);
+                return;
+              }
+              commitLoadProgress(sectorIndex, getVideoLoadProgress(video));
+            };
+
+            return (
+              <div
+                data-l={`MediaSector${sectorIndex + 1}`}
+                key={`sector-${sectorIndex}`}
+                className="pointer-events-none fixed inset-0"
+                style={{
+                  height: "100vh",
+                  maskImage: maskRef,
+                  maskRepeat: "no-repeat",
+                  maskSize: `${viewportWidth}px ${viewportHeight}px`,
+                  width: "100vw",
+                  WebkitMaskImage: maskRef,
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskSize: `${viewportWidth}px ${viewportHeight}px`,
+                }}
+              >
+                {isImage ? (
+                  <img
+                    alt=""
+                    className="h-full w-full object-cover"
+                    ref={(node) => {
+                      imgRefs.current[sectorIndex] = node;
+                    }}
+                    src={item.src}
+                    onError={markReady}
+                    onLoad={markReady}
+                  />
+                ) : (
+                  <video
+                    autoPlay
+                    className="h-full w-full object-cover"
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    ref={(node) => {
+                      videoRefs.current[sectorIndex] = node;
+                    }}
+                    src={item.src}
+                    onCanPlay={markReady}
+                    onCanPlayThrough={markReady}
+                    onError={markReady}
+                    onLoadedData={markProgress}
+                    onLoadedMetadata={markProgress}
+                    onProgress={markProgress}
+                  />
+                )}
+              </div>
+            );
+          })}
+          {innerSize > 0 ? (
+            <div
+              data-l="CenterHole"
+              className="pointer-events-none fixed rounded-full"
+              style={{
+                backgroundColor: "var(--TR)",
+                height: `${innerSize}px`,
+                left: `${holeX}px`,
+                top: `${holeY}px`,
+                width: `${innerSize}px`,
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </>
   );
 });
 

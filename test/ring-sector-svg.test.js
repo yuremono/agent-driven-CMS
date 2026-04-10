@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getMediaReadyPercent,
+  getOpeningRingCenter,
   getRingSectorSvgPathD,
   getRingSectorSvgPathDs,
   getViewportRingSectorSvgPathDs,
@@ -35,4 +37,27 @@ test("getRingSectorSvgPathD is degenerate when outer equals inner", () => {
   assert.match(d, /^M /);
   assert.match(d, / Z$/);
   assert.ok(d.length < 120, "collapsed sector path should stay short");
+});
+
+test("getMediaReadyPercent clamps into a safe percentage", () => {
+  assert.equal(getMediaReadyPercent(0, 4), 0);
+  assert.equal(getMediaReadyPercent(2, 4), 50);
+  assert.equal(getMediaReadyPercent(4, 4), 100);
+  assert.equal(getMediaReadyPercent(10, 4), 100);
+  assert.equal(getMediaReadyPercent(1, 0), 0);
+});
+
+test("getOpeningRingCenter moves from viewport center to left edge center", () => {
+  assert.deepEqual(getOpeningRingCenter(1200, 800, 320, 0), {
+    cx: 600,
+    cy: 400,
+  });
+  assert.deepEqual(getOpeningRingCenter(1200, 800, 320, 1), {
+    cx: 0,
+    cy: 320,
+  });
+
+  const middle = getOpeningRingCenter(1200, 800, 320, 0.5);
+  assert.equal(middle.cx, 300);
+  assert.equal(middle.cy, 360);
 });

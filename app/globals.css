@@ -2,22 +2,22 @@
 @config "../tailwind.config.js";
 @source "./**/*.{js,jsx,ts,tsx,mdx}";
 
-:root {
+:root {/*  ユーザーの指示がなければ編集禁止*/
   color-scheme: light;
   /* --- テーマ色（Canvas は readShowcasePalette で参照。ドーナツ4扇は --MC〜--BC）--- */
   --TR: transparent; /* キャンバス背景・穴まわり：4扇以外の塗り */
-  --MC: #b65325; /* 扇形1 */
-  --SC: #204d66; /* 扇形2 */
-  --AC: #94431c; /* 扇形3 */
-  --BC: #f8f2e8; /* 扇形4・ページ下地 */
+  --MC: oklch(55% 0.14 43); /* 扇形1 */
+  --SC: oklch(40% 0.06 235); /* 扇形2 */
+  --AC: oklch(48% 0.12 43); /* 扇形3 */
+  --BC: oklch(96% 0.01 80); /* 扇形4・ページ下地 */
   --second: var(--SC);
-  --third: red;
-  --fourth: blue;
-  --TC: #111; /* 本文テキスト */
-  --GR: #aaa; /* スクロールバー等 */
-  --BK: #000;
+  --third: oklch(62% 0.25 29);
+  --fourth: oklch(45% 0.3 264);
+  --TC: oklch(17% 0.00 271); /* 本文テキスト */
+  --GR: oklch(73% 0.00 271); /* スクロールバー等 */
+  --BK: oklch(0% 0 0);
   --WH: #ffffff;
-  --border: rgba(45, 35, 25, 0.11);
+  --border: oklch(26% 0.02 0.1);
   --gap: clamp(1rem, 2vw, 1.5rem);
   --gapH: calc(var(--gap) / 2);
   --wid: 80%;
@@ -66,7 +66,7 @@ textarea {
   flex-direction: column;
   justify-content: flex-end;
   gap: 0.75rem;
-  z-index: 60;
+  z-index: 30;
 }
 
 .editorTranscriptRail:not(:empty) {

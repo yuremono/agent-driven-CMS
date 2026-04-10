@@ -248,6 +248,30 @@ export function getViewportRingSectorSvgPathDs(
   });
 }
 
+export function clampUnit(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, value));
+}
+
+export function getMediaReadyPercent(readyCount, totalCount) {
+  if (!Number.isFinite(totalCount) || totalCount <= 0) return 0;
+  const safeReadyCount = Number.isFinite(readyCount) ? readyCount : 0;
+  return Math.round((Math.min(totalCount, Math.max(0, safeReadyCount)) / totalCount) * 100);
+}
+
+export function getOpeningRingCenter(viewportWidth, viewportHeight, ringCenterY, progress) {
+  const t = clampUnit(progress);
+  const startX = viewportWidth * HALF_RATIO;
+  const startY = viewportHeight * HALF_RATIO;
+  const endX = ORIGIN;
+  const endY = ringCenterY;
+
+  return {
+    cx: startX + (endX - startX) * t,
+    cy: startY + (endY - startY) * t,
+  };
+}
+
 // 4 区画を塗りつぶしの扇形として描く（各 segment.color は --MC〜--BC の解決値）。
 export function drawRing(ctx, cx, cy, outerRadius, innerRadius, rotation, segments) {
   ctx.save();
