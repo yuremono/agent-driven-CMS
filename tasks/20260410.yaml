@@ -1,0 +1,74 @@
+
+---
+task: "add learning log rule"
+status: "done"
+created_at: "20260410 00:02"
+completed_at: "20260410 00:03"
+request_summary: "$task-log スキルとagents.mdに. ユーザーから指摘された間違った修正・変更レビュー・リファクタリングを。/tasks/learning.yaml に追加してセッション開始時に閲覧する。 ルールを追記してください。"
+responce_summary: "`task-log` スキルと `AGENTS.md` に、誤った修正やレビュー指摘を `tasks/learning.yaml` に追記し、セッション開始時に毎回読むルールを追加した。`tasks/learning.yaml` も初期化して追記先を作成した。"
+---
+task: "record learning pattern"
+status: "done"
+created_at: "20260410 00:12"
+completed_at: "20260410 00:12"
+request_summary: "patterns:\n  - mistake: \n    correct: \nさっき私が言った指摘をよく思い出して、このフォーマットで書いてください。 それはともかくもっといいフォーマットがあれば提案してください。ただし、冗長にならないようにしてください。ご視聴ありがとうございました。"
+responce_summary: "学習ログを `mistake` / `correct` の対で追記し、前回のトップページ修正で受けた指摘を 3 件に要約して記録した。"
+---
+task: "clarify learning terminology"
+status: "done"
+created_at: "20260410 00:20"
+completed_at: "20260410 00:20"
+request_summary: "- mistake: \"テキストのタグと Tailwind クラスを固定した。\"\n      correct: \"タグと className をデータで差し替えられるようにす\n  る。\"\n  表現が雑すぎるあのようなテキストのコーディングをなんて言うんです\n  か？HTMLタグではなくてただ単に文字列としてしか入力できないことで\n  す。そういう書き方を現在のような変化の多い環境で行うことはリファク\n  タリングとは言えません。\nそれと他のミステイクも意図を理解できていなかったようなので。 ので。 書き換えたので、ちゃんと理解しておいてください。"
+responce_summary: "学習ログの表現を、単なるタグ固定ではなく `文字列ハードコード` / `データ駆動でない直書き` として整理し直す。"
+---
+task: "restore exact css variable names"
+status: "done"
+created_at: "20260410 00:38"
+completed_at: "20260410 00:39"
+request_summary: "イントゥゼロ、アウトゼロとか何考えてんの? プライマリー、セカンダリー、アクセント、バックグラウンド、フォアグラウンド、ミューティットってなんでわざわざ置き換えたの？あとレイアウトウィズとか勝手に変数決めんなよ。あらかじめ指定された変数って言ったでしょ？ふざけてんの？"
+responce_summary: "トップページの色参照を、`primary` 系の抽象名ではなく `--MC` / `--SC` / `--AC` / `--BC` / `--TC` / `--GR` / `--BK` / `--WH` に戻し、テキストはタグと className をデータで差し替えられる構造のまま維持した。`npm run build` で確認済み。"
+---
+task: "co-locate text and class names"
+status: "in_progress"
+created_at: "20260410 00:40"
+completed_at: ""
+request_summary: "これテキストとテイルウィンドクラスを同じ場所で指定できないよね。なんでこんなことしてるの?"
+responce_summary: "トップページのテキスト定義を、文章と Tailwind className を同じオブジェクトで持つ形へ寄せ直す。"
+---
+task: "co-locate text and class names"
+status: "done"
+created_at: "20260410 00:40"
+completed_at: "20260410 00:41"
+request_summary: "これテキストとテイルウィンドクラスを同じ場所で指定できないよね。なんでこんなことしてるの?"
+responce_summary: "トップページの表示データを `blocks` 配列にまとめ、各テキスト要素が `as` / `className` / `colorVar` / `text` を同じ場所で持つように整理した。`npm run build` で確認済み。"
+---
+task: "inline ring scroll content in jsx"
+status: "done"
+created_at: "20260410 00:46"
+completed_at: "20260410 00:47"
+request_summary: "いやだからJSXにそのまま書いた方が自然だったら、そのように書き換えてくれって言ってるじゃん。話聞いてんの？ふざけんなよ。"
+responce_summary: "RingScrollShowcase の本文を JSX に直接記述する形へ戻し、分離していた content ファイルを削除した。"
+---
+task: "fix ring scroll color lookup"
+status: "done"
+created_at: "20260410 00:49"
+completed_at: "20260410 00:51"
+request_summary: "Runtime TypeError Cannot read properties of undefined (reading 'trim')"
+responce_summary: "RingScrollShowcase の色参照を `palette[BK]` に修正し、`parseCssColor` が undefined を受けても落ちないようにした。`npm run build` で確認済み。"
+---
+task: "auto grow editor prompt textarea"
+status: "done"
+created_at: "20260410 01:17"
+completed_at: "20260410 01:17"
+request_summary: "aria-label=\"Editor prompt\" 2行以上になったらチャットインプット全体がテキストエリアのサイズに合わせて高くなっていくようにしてください。"
+responce_summary: "DevEditorOverlay の textarea を入力内容に合わせて自動リサイズし、入力欄全体も高さ追従しやすいように調整した。`npm run build` で確認済み。"
+---
+task: "remove leaked docs files from github only"
+status: "done"
+created_at: "20260410 15:45"
+completed_at: "20260410 15:45"
+request_summary: "tmp tasks ディレクトリと docs ディレクトリーの不要なファイルが GitHub の main に載ってしまっているので、ローカルは残したまま GitHub 上だけ削除する。docs 直下は 4 ファイル以外を消す。"
+responce_summary: "main から `docs/agent-browser.md` `docs/app-server.md` `docs/plans/2026-04-06-dev-overlay-editor-plan.md` `docs/subagents.md` を index から外し、ローカルの実体はそのまま残した。`tmp tasks` は origin/main には存在しなかった。"
+---
+！！！20260410 14:00 仕様変更有り。↑を参考にしてはいけない。スキルに従うこと！！！
+---
