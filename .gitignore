@@ -1,4 +1,5 @@
 .next
+
 node_modules
 dist
 coverage
@@ -33,4 +34,5 @@ tmp/*
 !tmp/browser-checks/
 !tmp/browser-checks/.gitkeep
 docs/private
+
 

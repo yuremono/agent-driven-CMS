@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: false
+---
+
 # Scripts
 
 ## picsum 画像の取得
