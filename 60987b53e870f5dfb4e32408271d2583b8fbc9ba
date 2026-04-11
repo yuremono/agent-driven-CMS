@@ -1,0 +1,33 @@
+app/components/RingScrollShowcase.jsx
+  45a213bfefdc5e64 30-33,277,283,310
+app/components/everyOtherAnimationFrame.js
+  45a213bfefdc5e64 1-29
+app/components/DevEditorOverlay.jsx
+  45a213bfefdc5e64 7-10,103,107
+app/components/RootClientShell.jsx
+  45a213bfefdc5e64 7-10,40,59
+app/components/VideoRingOverlay.jsx
+  45a213bfefdc5e64 21-23,204,211,218,248,255,285,293,423,426,474,485
+app/components/CanvasEffectLayer.jsx
+  45a213bfefdc5e64 5-9,12-14,21,23,97-109,247-249,254-261,264-270,279,288,294-335,352,354,361-363,376-378,381-382,385-387,412-421,424,435-440
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "60987b53e870f5dfb4e32408271d2583b8fbc9ba",
+  "prompts": {
+    "45a213bfefdc5e64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7d95-c7f6-7ff3-8d89-9afe81980e74",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 182,
+      "total_deletions": 27,
+      "accepted_lines": 182,
+      "overriden_lines": 0
+    }
+  }
+}
