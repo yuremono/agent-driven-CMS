@@ -1,7 +1,0 @@
----
-task: "canvas clip background"
-status: "done"
-created_at: "20260411 23:55"
-completed_at: "20260411 23:55"
-request_summary: "CanvasEffect のストローク込みクリップ形状に背景色を付けたい。CSS は触らず、黒塗りを白塗りに変えても効かなかった理由を踏まえて Canvas 側で対応したい。"
-responce_summary: "CanvasEffect のマスク作成後に source-in で背景色を塗り、source-atop で画像を重ねる順序に変更した。背景色は data-canvas-background または CSS 変数 --WH から読むようにし、画像の重なり量を data-canvas-image-alpha で調整できるようにした。"

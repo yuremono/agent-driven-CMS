@@ -1,7 +1,0 @@
----
-task: "canvas blob image mask"
-status: "done"
-created_at: "20260411 22:10"
-completed_at: "20260411 22:10"
-request_summary: "画像を文字形状ではなく、黒く歪んだアニメーション形状でクリップしたい。白い文字は DOM のまま残したい。"
-responce_summary: "Canvas のオフスクリーン描画を文字マスクから歪みブロブマスクへ切り替え、画像を黒いアニメーション形状にだけ流し込む構成へ変更した。z-index や DOM 側の白文字は維持した。"
