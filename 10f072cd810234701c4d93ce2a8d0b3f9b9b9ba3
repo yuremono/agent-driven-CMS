@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "10f072cd810234701c4d93ce2a8d0b3f9b9b9ba3",
+  "prompts": {
+    "5187dc8d8561df12": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9f452472-faa8-4389-a37e-59fcb7c400d5",
+        "model": "composer-2-fast"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
