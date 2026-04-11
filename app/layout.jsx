@@ -1,4 +1,4 @@
-import "./globals.css";
+import "./globals.scss";
 import RootClientShell from "./components/RootClientShell.jsx";
 
 export const metadata = {

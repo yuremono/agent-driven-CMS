@@ -29,24 +29,23 @@ import {
 } from "./ringScrollShowcaseGeometry.js";
 import VideoRingOverlay from "./VideoRingOverlay.jsx";
 
-const SHOWCASE_TITLE = "位相で巡るスクロールリング";
 const LOOP_COPY_COUNT = 3;
 const LOOP_MIDDLE_COPY_INDEX = 1;
 const DEFAULT_SECTION_CLASS_NAME = " min-h-[100lvh] content-center";
 const DEFAULT_CONTENT_CLASS_NAME = "grid gap-[var(--gap)]";
 const DEBUG_SEGMENT_POSITIONS = [
-  "absolute right-0 top-0 h-1/2 w-1/2",
-  "absolute right-0 bottom-0 h-1/2 w-1/2",
-  "absolute left-0 bottom-0 h-1/2 w-1/2",
-  "absolute left-0 top-0 h-1/2 w-1/2",
+	"absolute right-0 top-0 h-1/2 w-1/2",
+	"absolute right-0 bottom-0 h-1/2 w-1/2",
+	"absolute left-0 bottom-0 h-1/2 w-1/2",
+	"absolute left-0 top-0 h-1/2 w-1/2",
 ];
 
 // ドーナツの 4 扇。各 colorVar は CSS 変数（--MC 等）→ readShowcasePalette で実色に解決して Canvas に塗る。
 const RING_SEGMENTS = [
-  { id: "1", colorVar: TR },
-  { id: "2", colorVar: TR },
-  { id: "3", colorVar: TR },
-  { id: "4", colorVar: TR },
+	{ id: "1", colorVar: TR },
+	{ id: "2", colorVar: TR },
+	{ id: "3", colorVar: TR },
+	{ id: "4", colorVar: TR },
 ];
 
 /**
@@ -93,7 +92,10 @@ function SectionCopy({ copyIndex, sections }) {
 	const isVisibleCopy = copyIndex === LOOP_MIDDLE_COPY_INDEX;
 
 	return (
-		<div data-l={`SectionGroup${copyIndex + 1}`} aria-hidden={!isVisibleCopy}>
+		<div
+			data-l={`SectionGroup${copyIndex + 1}`}
+			aria-hidden={!isVisibleCopy}
+		>
 			{sections.map((section) => (
 				<section
 					data-l={`${section.locator}${copyIndex + 1}`}
@@ -101,15 +103,15 @@ function SectionCopy({ copyIndex, sections }) {
 					className={DEFAULT_SECTION_CLASS_NAME}
 				>
 					<div className={DEFAULT_CONTENT_CLASS_NAME}>
-						<p className="text-[0.7rem] uppercase tracking-[0.28em]">
+						<p className=" ">
 							{section.eyebrow}
 						</p>
 						{section.title ? (
-							<h2 className="text-[clamp(2.5rem,6vw,5.75rem)] leading-[0.9] tracking-[-0.06em]">
+							<h2 className=" ">
 								{section.title}
 							</h2>
 						) : null}
-						<p className="text-[0.98rem] leading-8">
+						<p className="">
 							{section.body}
 						</p>
 						{section.note ? (
@@ -322,7 +324,7 @@ export default function RingScrollShowcase({
 			className="relative min-h-screen overflow-x-hidden text-white"
 		>
 			<h1 id="ring-showcase-title" className="sr-only">
-				{SHOWCASE_TITLE}
+				Agent Driven CMS Site Editor
 			</h1>
 			<div
 				data-l="CanvasLayer"

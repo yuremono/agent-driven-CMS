@@ -1,0 +1,303 @@
+@import "tailwindcss/index.css";
+@config "../tailwind.config.js";
+@source "./**/*.{js,jsx,ts,tsx,mdx}";
+
+:root {/*  ユーザーの指示がなければ編集禁止*/
+  color-scheme: light;
+  /* --- テーマ色（Canvas は readShowcasePalette で参照。ドーナツ4扇は --MC〜--BC）--- */
+  --TR: transparent; /* キャンバス背景・穴まわり：4扇以外の塗り */
+  --MC: oklch(55% 0.14 43); /* 扇形1 */
+  --SC: oklch(40% 0.06 235); /* 扇形2 */
+  --AC: oklch(48% 0.12 43); /* 扇形3 */
+  --BC: oklch(96% 0.01 80); /* 扇形4・ページ下地 */
+  --second: var(--SC);
+  --third: oklch(62% 0.25 29);
+  --fourth: oklch(45% 0.3 264);
+  --TC: oklch(17% 0.00 271); /* 本文テキスト */
+  --GR: oklch(73% 0.00 271); /* スクロールバー等 */
+  --BK: oklch(0% 0 0);
+  --WH: oklch(100% 0 0);
+  @for $i from 1 through 9 {
+        --MC#{$i}0: color-mix(in srgb, transparent, var(--MC) #{$i}0%);
+        --SC#{$i}0: color-mix(in srgb, transparent, var(--SC) #{$i}0%);
+        --AC#{$i}0: color-mix(in srgb, transparent, var(--AC) #{$i}0%);
+        --BC#{$i}0: color-mix(in srgb, transparent, var(--BC) #{$i}0%);
+        --TC#{$i}0: color-mix(in srgb, transparent, var(--TC) #{$i}0%);
+        --GR#{$i}0: color-mix(in srgb, transparent, var(--GR) #{$i}0%);
+        --WH#{$i}0: color-mix(in srgb, transparent, var(--WH) #{$i}0%);
+        --BK#{$i}0: color-mix(in srgb, transparent, var(--BK) #{$i}0%);
+        }
+  --border: oklch(26% 0.02 0.1);
+  --gap: clamp(1rem, 2vw, 1.5rem);
+  --gapH: calc(var(--gap) / 2);
+  --wid: 85%;
+  --MY: clamp(4rem, 7vw, 6rem);
+  --PX: clamp(1.25rem, 2.5vw, 2rem);
+  --h1: 64px;
+  --h2: 40px;
+  --h3: 24px;
+  --h1FZ: clamp(32px, 6.4vw, var(--h1));
+  --h2FZ: clamp(24px, 4vw, var(--h2));
+  --h3FZ: clamp(18px, 2.4vw, var(--h3));
+
+  --LS: 0.05em;
+  --LH: 2;
+  --HLH: 1.375;
+  --FW: 400;
+  --FZ: clamp(14px,1.4vw,16px);
+}
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
+:root {//font
+        --Ser: "Shippori Mincho","Noto Serif JP", serif;
+           // "Noto Sans JP",
+           // "メイリオ", Meiryo,
+        --San:
+                -apple-system,
+                /* iOS/macOS */
+                BlinkMacSystemFont,
+                /* macOS Safari/Chrome */
+                "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                /* macOS日本語 */
+                "Yu Gothic Medium", "Yu Gothic", "Meiryo",
+                /* Windows */
+                "Roboto", "Noto Sans CJK JP",
+                /* Android */
+                sans-serif;
+
+        --FF: var(--Ser) ,sans-serif;
+        --Eng:  var(--Ser), sans-serif;
+}
+@layer base {
+
+        * {
+          box-sizing: border-box;
+        }
+        
+        ::-webkit-scrollbar{background-color: transparent;width: 0px;height: 0;}
+        
+        html{
+                font-size: 100% ;
+                text-size-adjust: none;
+                -moz-text-size-adjust: none;
+                -webkit-text-size-adjust: none;
+            /* //     overflow-x: hidden; */
+                scroll-behavior: smooth;
+                &:has(.h.active, .policy-wrap.active, .modal.active) {
+                    overflow: hidden;
+                }
+            }
+            
+            body {
+                    font-size: var(--FZ);
+                    overflow-x: hidden;
+                    font-family: var(--FF);
+                    font-weight: var(--FW);
+                    line-height: var(--LH);
+                    letter-spacing: var(--LS);
+                    color: var(--TC);
+                    font-style: normal;
+                    background-color: var(--TR);
+            }
+            
+            .Ser {font-family: var(--Ser);}
+            .San {font-family: var(--San);}
+            .Eng {
+                    font-family: var(--Eng);
+                    font-weight: 700;
+            }
+            :where(.sub) {
+                    font-size: 1.5rem;
+                    color: var(--GR);
+                    font-family: var(--Eng);
+                    line-height: var(--LH);
+                    &.block{
+                            margin-bottom: .5rem;
+                    }
+            }
+        
+        button,
+        textarea {
+          font: inherit;
+        }
+        
+        
+        span {display: inline-block;}
+        :where(div){
+                max-width: 100%;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+            display: inline-block;
+        }
+        img, video {
+                object-fit: cover;
+        }
+        h1,.h1FZ {
+            font-size: var(--h1FZ);
+        }
+        h2,.h2FZ {
+            font-size: var(--h2FZ);
+        }
+        h3,.h3FZ {
+            font-size: var(--h3FZ);
+        }
+        h5,
+        h4 {
+            font-size: var(--h3FZ);
+        }
+        .wid {
+                width: var(--wid);
+        }
+        
+        .PX {
+                padding-inline: var(--PX);
+        }
+        
+        .MY {
+                margin-block: var(--MY);
+        }
+        .into {
+                padding-inline: var(--into);
+        } 
+        
+        .intoL {
+                padding-left: var(--into);
+        
+        }
+        
+        .intoR {
+                padding-right: var(--into);
+        }
+        
+        .out {
+                margin-inline: var(--out);
+                max-width: unset;
+                width: unset;
+        }
+        
+        .outR {
+                margin-right: var(--out);
+                max-width: unset;
+        }
+        
+        .outL {
+                margin-left: var(--out);
+                max-width: unset;
+        }
+        
+        
+        
+        .editorOverlay {
+          position: fixed;
+          left: 50%;
+          top: 1rem;
+          bottom: 1rem;
+          width: var(--wid);
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          z-index: 30;
+        }
+        
+        .editorTranscriptRail:not(:empty) {
+          min-height: 0;
+          flex-direction: column;
+          justify-content: flex-end;
+          border: 1px solid rgba(38, 27, 18, 0.1);
+          border-radius: 32px;
+          /* 単色（旧グラデーション廃止） */
+          background: var(--BC);
+          color: var(--TC);
+          box-shadow: 0 22px 72px rgba(39, 24, 12, 0.14);
+          backdrop-filter: blur(28px);
+          padding: 1em;
+        }
+        
+        
+        .editorTranscript {
+          min-height: 0;
+          width: 100%;
+          overflow-y:auto;
+          padding-right: 0.5em;
+                height:100%;
+                &::-webkit-scrollbar{background-color: transparent;width: 8px;height: 0;}
+                &::-webkit-scrollbar-thumb {
+                        background-color:var(--GR);
+                        border-radius: 100px;
+                }
+        }
+        
+        
+        
+        .editorTranscriptList {
+          display: grid;
+          gap: 0.9rem;
+        }
+        
+        .editorTranscriptItem {
+          display: grid;
+          gap: 0.35rem;
+        }
+        
+        .editorTranscriptItemUser {
+          justify-items: end;
+        }
+        
+        .editorTranscriptItemAssistant {
+          justify-items: start;
+        }
+        
+        .editorTranscriptLabel {
+          margin: 0;
+          font-size: 0.65rem;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: var(--SC);
+        }
+        
+        .editorTranscriptBubble {
+          /* max-width: min(100%, 74ch); */
+          border: 1px solid rgba(38, 27, 18, 0.1);
+          border-radius: 22px;
+          padding: 0.9rem 1rem;
+          white-space: pre-wrap;
+          line-height: 1.8;
+        }
+        
+        .editorTranscriptBubbleUser {
+          background: rgba(255, 255, 255, 0.78);
+        }
+        
+        .editorTranscriptBubbleAssistant {
+          background: rgba(255, 255, 255, 0.56);
+        }
+        
+        .editorTranscriptBubbleError {
+          background: rgba(182, 83, 37, 0.12);
+          color: #7f3518;
+        }
+        
+        @media (min-width: 768px) {
+          .pageRow {
+            grid-template-columns: 120px minmax(0, 1fr);
+            gap: 1.5rem;
+          }
+        }
+        
+        @media (max-width: 767px) {
+          :root {
+            --editor-offset: 0.75rem;
+          }
+        
+          .editorOverlay {
+            width: calc(100vw - 16px);
+          }
+        
+          .editorTranscriptViewport {
+            padding: 0.875rem;
+          }
+        }
+}

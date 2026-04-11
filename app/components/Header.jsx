@@ -37,17 +37,17 @@ const actionItems = [
 function BrandLockup() {
   return (
     <Link href="/" className="shrink-0" aria-label="Agent Driven CMS ホーム">
-      <span className="flex items-center gap-3">
+      <span className="">
         {/* <img
           src={logo.src}
           alt={logo.alt}
           className="block h-auto w-[110px] sm:w-[132px] lg:w-[164px]"
         /> */}
-        <span className="hidden min-w-0 sm:grid">
-          <span className="text-[0.65rem] uppercase tracking-[0.28em] text-[--SC]">
+        <span className="">
+          <span className="block">
             {logo.eyebrow}
           </span>
-          <span className='font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[1.15rem] tracking-[-0.04em] text-[--TC]'>
+          <span className='block'>
             {logo.name}
           </span>
         </span>
@@ -169,22 +169,23 @@ function MobileMenu() {
   );
 }
 
-export default function HomeHeader() {
-  return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-6">
-      <div
-        className="mx-auto max-w-[1440px] rounded-[28px] border border-[--TC] bg-[--WH]"
-        style={{
-          boxShadow: "0 20px 48px color-mix(in srgb, var(--BK) 14%, transparent)",
-        }}
-      >
-        <div className="flex items-center gap-3 px-4 py-3 lg:px-5">
-          <BrandLockup />
-          <DesktopNav />
-          <HeaderActions />
-          <MobileMenu />
-        </div>
-      </div>
-    </header>
-  );
+export default function Header() {
+	return (
+		<header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-6">
+			<div
+				className="mx-auto max-w-[1440px] rounded-[28px] border border-[--TC] bg-[--WH]"
+				style={{
+					boxShadow:
+						"0 20px 48px color-mix(in srgb, var(--BK) 14%, transparent)",
+				}}
+			>
+				<div className="flex items-center gap-3 px-4 py-3 lg:px-5">
+					<BrandLockup />
+					<DesktopNav />
+					<HeaderActions />
+					<MobileMenu />
+				</div>
+			</div>
+		</header>
+	);
 }
