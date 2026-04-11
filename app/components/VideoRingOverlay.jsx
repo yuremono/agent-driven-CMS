@@ -32,7 +32,7 @@ const DEFAULT_MEDIA_ITEMS = [
 ];
 
 const MIN_LOADING_MS = 1000;
-const RELOCATE_MS = 1000;
+const RELOCATE_MS = 1500;
 const REVEAL_MS = 2000;
 
 function easeOutCubic(t) {
@@ -505,7 +505,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     <div
       data-l="LoadingLayer"
       aria-hidden="true"
-      className={`fixed inset-0 z-[120] bg-[var(--WH)] transition-opacity duration-[1000ms] ease-out ${
+      className={`fixed inset-0 z-[120] bg-[var(--WH)] text-[var(--BK70)] transition-opacity duration-[1500ms] ease-out ${
         openingPhase === "done" ? "pointer-events-none" : "pointer-events-auto"
       }`}
       style={{ opacity: loadingOverlayOpacity }}
@@ -514,7 +514,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
         {loadingTextVisible ? (
           <div
             data-l="LoadingValue"
-            className="absolute left-1/2 top-1/2 text-[clamp(2.5rem,6vw,5.75rem)] italic leading-none tracking-[-0.06em] text-[var(--TC)] transition-[transform,opacity] duration-[1000ms] ease-out"
+            className="absolute left-1/2 top-1/2 text-[clamp(2.5rem,6vw,5.75rem)] italic leading-none  transition-[transform,opacity] duration-[1000ms] ease-out"
             style={{
               opacity: loadingOverlayOpacity,
               transform: `translate(-50%, -50%) translateX(${loadingTextShift}vw)`,

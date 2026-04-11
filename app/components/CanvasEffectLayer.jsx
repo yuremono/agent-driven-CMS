@@ -5,7 +5,7 @@ import { useEffect } from "react";
 const HOST_CLASS = "CanvasEffect";
 const CANVAS_CLASS = "CanvasEffectCanvas";
 const STEP_MS = 96;
-const DEFAULT_VARIANCE = 0.18;
+const DEFAULT_VARIANCE = 0.0;
 const DEFAULT_IMAGE_SRC = "/images/home/clip01.png";
 const DEFAULT_CLIP_BACKGROUND_VAR = "--WH";
 const DEFAULT_IMAGE_ALPHA = 1;
@@ -104,7 +104,7 @@ function drawController(controller, step) {
   const fontWeight = styles.fontWeight || "400";
   const fontStyle = styles.fontStyle || "normal";
   const fontFamily = styles.fontFamily || "serif";
-  const lineHeight = styles.lineHeight === "normal" ? fontSize * 1.08 : Number.parseFloat(styles.lineHeight) || fontSize * 1.08;
+  const lineHeight = styles.lineHeight === "normal" ? fontSize * 1.00 : Number.parseFloat(styles.lineHeight) || fontSize * 1.00;
   const letterSpacing = styles.letterSpacing === "normal" ? 0 : Number.parseFloat(styles.letterSpacing) || 0;
   const variance = readVariance(host);
   const padding = Math.max(6, Math.ceil(fontSize * (0.18 + variance * 0.4)));
@@ -138,7 +138,7 @@ function drawController(controller, step) {
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const stepSeed = controller.seed + step * 97;
   const lineMetrics = lines.map((line) => ctx.measureText(line));
-  const textHeight = Math.max(lineHeight, lineMetrics.reduce((max, metrics) => Math.max(max, (metrics.actualBoundingBoxAscent || fontSize * 0.78) + (metrics.actualBoundingBoxDescent || fontSize * 0.22)), 0));
+  const textHeight = Math.max(lineHeight, lineMetrics.reduce((max, metrics) => Math.max(max, (metrics.actualBoundingBoxAscent || fontSize * 0.8) + (metrics.actualBoundingBoxDescent || fontSize * 0.2)), 0));
   const topOffset = padding + Math.max(0, (rect.height - textHeight) / 2);
   const fillCtx = controller.fillCtx;
   const fillImage = controller.fillImage;
@@ -166,12 +166,13 @@ function drawController(controller, step) {
 
   lines.forEach((line, lineIndex) => {
     const metrics = lineMetrics[lineIndex];
-    const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.78;
-    const descent = metrics.actualBoundingBoxDescent || fontSize * 0.22;
+    const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || fontSize * 0.2;
     const rowCenterY = topOffset + lineIndex * lineHeight + lineHeight / 2;
     const baselineY = rowCenterY + (ascent - descent) / 2;
-    const wobble = Math.max(1.2, fontSize * (0.015 + variance * 0.06));
-    const lineWidth = Math.max(2, fontSize * (0.11 + variance * 0.12));
+    const wobble = Math.max(1.2, fontSize * (0.02 + variance * 0.06));
+//     const lineWidth = Math.max(1, fontSize * (0.1 + variance * 0));
+    const lineWidth = 10;
     const passes = 10;
 
     ctx.lineWidth = lineWidth;

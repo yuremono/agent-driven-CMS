@@ -36,7 +36,7 @@ const actionItems = [
 
 function BrandLockup() {
   return (
-    <Link href="/" className="shrink-0" aria-label="Agent Driven CMS ホーム">
+    <Link href="/" className="absolute top-1/2 left-0 translate-y-[-50%] pointer-events-auto" aria-label="Agent Driven CMS ホーム">
       <span className="">
         {/* <img
           src={logo.src}
@@ -58,8 +58,8 @@ function BrandLockup() {
 
 function DesktopNav() {
   return (
-    <nav className="hidden flex-1 justify-center lg:flex" aria-label="main navigation">
-      <ul className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-[--TC] bg-[--BC] px-3 py-2">
+    <nav className="hidden  lg:flex bg-white pointer-events-auto" aria-label="main navigation">
+      <ul className="flex flex-wrap items-center justify-center gap-2   px-3 py-2">
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
@@ -105,7 +105,7 @@ function DesktopNav() {
 
 function HeaderActions() {
   return (
-    <div className="hidden items-center gap-2 lg:flex">
+    <div className="hidden  lg:flex bg-white pointer-events-auto">
       {actionItems.map((item) => (
         <Link key={item.href} href={item.href} className={item.className}>
           {item.label}
@@ -171,21 +171,13 @@ function MobileMenu() {
 
 export default function Header() {
 	return (
-		<header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-6">
-			<div
-				className="mx-auto max-w-[1440px] rounded-[28px] border border-[--TC] bg-[--WH]"
-				style={{
-					boxShadow:
-						"0 20px 48px color-mix(in srgb, var(--BK) 14%, transparent)",
-				}}
-			>
-				<div className="flex items-center gap-3 px-4 py-3 lg:px-5">
+		<header className="fixed top-0 z-40 w-full h-full pointer-events-none">
+				<div className="flex flex-col items-end justify-between h-full">
 					<BrandLockup />
 					<DesktopNav />
 					<HeaderActions />
 					<MobileMenu />
 				</div>
-			</div>
 		</header>
 	);
 }

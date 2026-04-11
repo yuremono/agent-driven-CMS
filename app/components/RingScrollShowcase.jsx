@@ -59,7 +59,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "ContourSection",
 		media: { src: "/video/001.mp4", kind: "video" },
 		contentHtml: `
-                <h2 class="text-[19cqw] ">
+                <h2 class="text-[19cqw] leading-none">
                         <span class="CanvasEffect text-[16cqw] tracking-[-0.11em] ">read the outline</span>
                         <span class="CanvasEffect ">輪郭を読む</span>
                 </h2>
@@ -70,8 +70,8 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "PhaseSection",
 		media: { src: "/video/002.mp4", kind: "video" },
 		contentHtml: `
-                <h2 class="text-[16cqw] ">
-                        <span class="CanvasEffect tracking-[-0.08em]">Shift the phase</span>
+                <h2 class="text-[16cqw] leading-none">
+                        <span class="CanvasEffect tracking-[-0.08em] pb-[0.15em]">Shift the phase</span>
                         <span class="CanvasEffect">位相をずらす</span>
                 </h2>
                 <p class="mt-8">1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。</p>`.trim(),
@@ -81,8 +81,8 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "LayerSection",
 		media: { src: "/video/003.mp4", kind: "video" },
 		contentHtml: `
-               <h2 class="text-[19cqw] ">
-                        <span class="CanvasEffect text-[13cqw] tracking-[-0.14em]">layer the membrane</span>
+               <h2 class="text-[19cqw] leading-none">
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.14em] pb-[0.15em]">layer the membrane</span>
                         <span class="CanvasEffect">膜を重ねる</span>
                 </h2>
                 <p class="mt-8">3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。</p>`.trim(),
@@ -92,7 +92,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "LoopSection",
 		media: { src: "/video/004.mp4", kind: "video" },
 		contentHtml: `
-                <h2 class="text-[19cqw] ">
+                <h2 class="text-[19cqw] leading-none">
                         <span class="CanvasEffect text-[13cqw] tracking-[-0.115em] ">return to circulation</span>
                         <span class="CanvasEffect">循環へ戻す</span>
                 </h2>
