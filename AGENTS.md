@@ -48,7 +48,6 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 - あなたが実行した行動をユーザーに**誤った行動**だと指摘されたら、論理的に分析して `tasks/learning.yaml` に追記する
 - 部分的な修正は、周囲のコードを書き換えないように `apply_patch` のような差分ツールで最小差分を修正する。
 - `app/api/*` は `runtime = "nodejs"` を維持し、app-server との接続はサーバー側で扱う。
-- 認証情報やシークレットをブラウザへ渡さない。
 - UI は既存の状態表示・承認フローを壊さずに拡張する。
 - 初めて編集するファイルは、編集前に必ず内容を確認する。
 - `docs/vision.md` は重要ファイルとして扱い、必要に応じて更新する。
@@ -63,9 +62,5 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 ## 禁止事項
 
 - `git reset --hard` や `git checkout --` のような破壊的操作を勝手に使わない。
-- 秘密情報を repo に追加しない。
-- ブラウザへ API key を露出させない。
+- 認証情報やシークレットをrepoやブラウザへ渡さない。
 
-<!-- - 単一ソースで回答できる質問への回答、１箇所の修正は即座に実行する
-- 2ステップ必要な行動は`task`として、必ず `task-log` スキルを実行すること
-- 5ステップ必要な行動は`task-large`として、必ず `task-large` スキルを実行すること -->
