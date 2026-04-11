@@ -1,0 +1,23 @@
+.conductor/conductor.json
+  a96088ad03d3b3a3 3,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "33bd8982f5f0082129fe74fdbc5bd99c8460bc2e",
+  "prompts": {
+    "a96088ad03d3b3a3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7d19-637a-79d0-9d86-6ec286d7e22c",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 3,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
