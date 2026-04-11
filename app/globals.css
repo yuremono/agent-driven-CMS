@@ -20,7 +20,7 @@
   --border: oklch(26% 0.02 0.1);
   --gap: clamp(1rem, 2vw, 1.5rem);
   --gapH: calc(var(--gap) / 2);
-  --wid: 80%;
+  --wid: 85%;
   --MY: clamp(4rem, 7vw, 6rem);
   --PX: clamp(1.25rem, 2.5vw, 2rem);
 }
