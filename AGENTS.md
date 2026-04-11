@@ -52,7 +52,7 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 - 初めて編集するファイルは、編集前に必ず内容を確認する。
 - `docs/vision.md` は重要ファイルとして扱い、必要に応じて更新する。
 - `tasks` ,`tmp` ディレクトリを github に push しない
-- 全ての色は`app/globals.css`の`OKlch`で書かれた既存変数を使用する。グラデーションとシャドウは使用しない。見つけたらユーザーに報告する。
+- 全ての色は`app/globals.css`の`oklch`で書かれた既存変数を使用する。透明度もWH50などで指定可能。グラデーションとシャドウは使用しない。見つけたらユーザーに報告する。
 
 ## ブラウザ確認
 

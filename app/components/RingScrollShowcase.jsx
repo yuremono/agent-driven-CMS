@@ -32,7 +32,8 @@ import VideoRingOverlay from "./VideoRingOverlay.jsx";
 const LOOP_COPY_COUNT = 3;
 const LOOP_MIDDLE_COPY_INDEX = 1;
 const DEFAULT_SECTION_CLASS_NAME = " min-h-[100lvh] content-center";
-const DEFAULT_CONTENT_CLASS_NAME = "grid gap-[var(--gap)]";
+/** セクション本文ラッパー。`contentHtml` の子を並べるためのグリッド。 */
+const DEFAULT_CONTENT_CLASS_NAME = "inline-size";
 const DEBUG_SEGMENT_POSITIONS = [
 	"absolute right-0 top-0 h-1/2 w-1/2",
 	"absolute right-0 bottom-0 h-1/2 w-1/2",
@@ -50,40 +51,53 @@ const RING_SEGMENTS = [
 
 /**
  * 本文と背景メディアを同じ長さで管理する。`media` は VideoRingOverlay に渡る。
+ * `contentHtml` は信頼できる編集元向けのマークアップ（`dangerouslySetInnerHTML`）。信頼できない入力は渡さないこと。
  */
 export const DEFAULT_SHOWCASE_SECTIONS = [
 	{
 		id: "1",
 		locator: "ContourSection",
-		eyebrow: "section 1",
-		title: "輪郭を読む",
-		body: "最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。",
 		media: { src: "/video/001.mp4", kind: "video" },
+		contentHtml: `
+                <h2 class="text-[19cqw] ">
+                        <span class="CanvasEffect text-[16cqw] tracking-[-0.11em] ">read the outline</span>
+                        <span class="CanvasEffect ">輪郭を読む</span>
+                </h2>
+                <p class="mt-8">最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。</p>`.trim(),
 	},
 	{
 		id: "2",
 		locator: "PhaseSection",
-		eyebrow: "section 2",
-		title: "位相をずらす",
-		body: "1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。",
 		media: { src: "/video/002.mp4", kind: "video" },
+		contentHtml: `
+                <h2 class="text-[16cqw] ">
+                        <span class="CanvasEffect tracking-[-0.08em]">Shift the phase</span>
+                        <span class="CanvasEffect">位相をずらす</span>
+                </h2>
+                <p class="mt-8">1 画面ぶん下へ進むと、2 番の面が前に出る。縦スクロールはそのまま 90 度の移動になる。</p>`.trim(),
 	},
 	{
 		id: "3",
 		locator: "LayerSection",
-		eyebrow: "section 3",
-		title: "膜を重ねる",
-		body: "3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。",
 		media: { src: "/video/003.mp4", kind: "video" },
+		contentHtml: `
+               <h2 class="text-[19cqw] ">
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.14em]">layer the membrane</span>
+                        <span class="CanvasEffect">膜を重ねる</span>
+                </h2>
+                <p class="mt-8">3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。</p>`.trim(),
 	},
 	{
 		id: "4",
 		locator: "LoopSection",
-		eyebrow: "section 4",
-		title: "循環へ戻す",
-		body: "4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。",
-		note: "下へ進むほど、背景の 90 度が次の面へ移る。",
 		media: { src: "/video/004.mp4", kind: "video" },
+		contentHtml: `
+                <h2 class="text-[19cqw] ">
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.115em] ">return to circulation</span>
+                        <span class="CanvasEffect">循環へ戻す</span>
+                </h2>
+                <p class="mt-8">4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。</p>
+                <div class="pt-6 text-sm">下へ進むほど、背景の 90 度が次の面へ移る。</div>`.trim(),
 	},
 ];
 
@@ -102,22 +116,13 @@ function SectionCopy({ copyIndex, sections }) {
 					key={`${copyIndex}-${section.id}`}
 					className={DEFAULT_SECTION_CLASS_NAME}
 				>
-					<div className={DEFAULT_CONTENT_CLASS_NAME}>
-						<p className=" ">
-							{section.eyebrow}
-						</p>
-						{section.title ? (
-							<h2 className=" ">
-								{section.title}
-							</h2>
-						) : null}
-						<p className="">
-							{section.body}
-						</p>
-						{section.note ? (
-							<div className="pt-6 text-sm">{section.note}</div>
-						) : null}
-					</div>
+					<div
+						className={DEFAULT_CONTENT_CLASS_NAME}
+						// eslint-disable-next-line react/no-danger -- セクション本文は編集者管理の HTML
+						dangerouslySetInnerHTML={{
+							__html: section.contentHtml ?? "",
+						}}
+					/>
 				</section>
 			))}
 		</div>

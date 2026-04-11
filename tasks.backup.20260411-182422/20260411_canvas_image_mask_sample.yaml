@@ -1,0 +1,7 @@
+---
+task: "canvas image mask sample"
+status: "done"
+created_at: "20260411 21:50"
+completed_at: "20260411 21:50"
+request_summary: "CanvasEffect に画像をマスクして、指定した画像を文字形状の中に流し込む試しをしたい。"
+responce_summary: "Canvas のオフスクリーン描画で先に画像を敷き、その上から文字をマスクとして重ねる構成に直した。`destination-in` が効くように合成順を逆転し、サンプル画像として提供画像に近い SVG を `public/images/canvas-mask-sample.svg` に用意した。"

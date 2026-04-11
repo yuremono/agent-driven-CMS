@@ -1,14 +1,66 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect } from "react";
+import CanvasEffectLayer from "./CanvasEffectLayer.jsx";
+import EffectWarpDefs from "./EffectWarpDefs.jsx";
 
 const DevBridgeLayer = dynamic(() => import("./DevBridgeLayer.jsx"), {
   ssr: false,
 });
 
+function syncEffectText(root = document) {
+  const nodes = root.querySelectorAll(".effect, .effect > *");
+
+  nodes.forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+
+    const text = node.textContent?.replace(/\s+/g, " ").trim();
+    if (!text) return;
+
+    if (node.dataset.effectText !== text) {
+      node.dataset.effectText = text;
+    }
+  });
+}
+
 export default function RootClientShell({ children }) {
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+
+    let rafId = 0;
+
+    const scheduleSync = () => {
+      if (rafId) return;
+
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        syncEffectText();
+      });
+    };
+
+    syncEffectText();
+
+    const observer = new MutationObserver(scheduleSync);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => {
+      observer.disconnect();
+
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
+
   return (
     <>
+      <EffectWarpDefs />
+      <CanvasEffectLayer />
       {children}
       {process.env.NODE_ENV === "development" ? <DevBridgeLayer /> : null}
     </>

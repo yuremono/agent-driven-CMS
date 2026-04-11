@@ -67,7 +67,59 @@
         --FF: var(--Ser) ,sans-serif;
         --Eng:  var(--Ser), sans-serif;
 }
+.effect{
+        position: relative;
+        isolation: isolate;
+        color: var(--WH);
+        -webkit-text-fill-color: var(--WH);
+}
+
+.effect > * {
+        position: relative;
+        z-index: 1;
+}
+
+.effect::before {
+        content: attr(data-effect-text);
+        position: absolute;
+        inset: 0;
+        display: block;
+        pointer-events: none;
+        white-space: inherit;
+        filter: url("#effect-warp");
+        transform: translate3d(0, 0, 0);
+        will-change: filter, transform;
+        z-index: -1;
+        -webkit-text-fill-color: transparent;
+        -webkit-text-stroke: .125em var(--TR);
+        paint-order: stroke;
+        color: var(--TR);
+        background-image: linear-gradient(var(--BC), var(--MC));
+        background-clip: text;
+
+}
+
+.CanvasEffect {
+        position: relative;
+        display: inline-block;
+        overflow: visible;
+        color: #000;
+}
+
+// .CanvasEffect[data-canvas-effect-bound="1"] {
+//         color: #fff;
+// }
+
+.CanvasEffectCanvas {
+        position: absolute;
+        pointer-events: none;
+        z-index: -1;
+}
 @layer base {
+
+        .inline-size {
+                container-type: inline-size;
+        }
 
         * {
           box-sizing: border-box;
@@ -135,16 +187,20 @@
         }
         h1,.h1FZ {
             font-size: var(--h1FZ);
+            line-height: 1.0625;
         }
         h2,.h2FZ {
             font-size: var(--h2FZ);
+            line-height: 1.0625;
         }
         h3,.h3FZ {
             font-size: var(--h3FZ);
+            line-height: 1.0625;
         }
         h5,
         h4 {
             font-size: var(--h3FZ);
+            line-height: 1.0625;
         }
         .wid {
                 width: var(--wid);

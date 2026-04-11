@@ -1,0 +1,7 @@
+---
+task: "outline wobble effect"
+status: "done"
+created_at: "20260411 21:23"
+completed_at: "20260411 21:23"
+request_summary: "effect クラスだけで使える輪郭の不規則な歪みを試したい。DOM 要素を増やさず、テキスト変更にも追従できる形にしたい。"
+responce_summary: "既存の `.effect` を自動スキャンして文字列を `data-effect-text` に複製し、擬似要素側にだけ SVG フィルターを当てる形で実装した。追加 DOM は増やさず、`effect` クラスを付けるだけで動く構成にした。"

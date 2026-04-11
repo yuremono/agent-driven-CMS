@@ -1,0 +1,7 @@
+---
+task: "canvas stroked mask"
+status: "done"
+created_at: "20260411 22:30"
+completed_at: "20260411 22:30"
+request_summary: "CanvasEffect の画像クリップを、文字の塗りだけではなく歪んだストローク込みの出力形状でマスクしたい。CanvasEffectCanvas の z-index は変えず、白い文字表示を維持したい。"
+responce_summary: "CanvasEffect のオフスクリーン描画を、先に歪んだ strokeText と fillText の形状を通常合成で作り、最後に画像を source-in で流し込む順序へ変更した。CanvasEffectCanvas の z-index は維持し、DOM テキスト色を var(--WH) に戻した。"
