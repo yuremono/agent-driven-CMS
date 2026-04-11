@@ -1,0 +1,7 @@
+{
+        "scripts": {
+          "setup": "mkdir -p $CONDUCTOR_ROOT_PATH/tasks && if [ -L tasks ]; then echo tasks_symlink_already_exists; elif [ -e tasks ]; then mv tasks tasks.backup.$(date +%Y%m%d-%H%M%S) && ln -s $CONDUCTOR_ROOT_PATH/tasks tasks && echo tasks_backed_up_and_symlink_created; else ln -s $CONDUCTOR_ROOT_PATH/tasks tasks && echo linked_tasks_to_shared_dir; fi",
+          "run": "npm run dev -- --port $CONDUCTOR_PORT",
+          "archive": ""
+        }
+      }

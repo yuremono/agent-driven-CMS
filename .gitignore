@@ -19,7 +19,10 @@ pnpm-debug.log*
 .memsearch/
 docs/
 private/
-public/
+public/css
+public/images/home
+public/images/shomeido
+public/js
 tasks/
 NOTE.md
 NOTE2.md
