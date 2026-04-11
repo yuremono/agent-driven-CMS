@@ -1,0 +1,23 @@
+app/components/ringScrollShowcaseGeometry.js
+  dd5238047c711d90 156-157,166-170,172-176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "f193484b5290348a5b9fe5ba3e4f4171877a56b2",
+  "prompts": {
+    "dd5238047c711d90": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b5cbd3dd-fdce-4975-8c9a-76fbd9107bf0",
+        "model": "composer-2-fast"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 2,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
