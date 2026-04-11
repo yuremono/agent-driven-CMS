@@ -38,11 +38,11 @@ function BrandLockup() {
   return (
     <Link href="/" className="shrink-0" aria-label="Agent Driven CMS ホーム">
       <span className="flex items-center gap-3">
-        <img
+        {/* <img
           src={logo.src}
           alt={logo.alt}
           className="block h-auto w-[110px] sm:w-[132px] lg:w-[164px]"
-        />
+        /> */}
         <span className="hidden min-w-0 sm:grid">
           <span className="text-[0.65rem] uppercase tracking-[0.28em] text-[--SC]">
             {logo.eyebrow}

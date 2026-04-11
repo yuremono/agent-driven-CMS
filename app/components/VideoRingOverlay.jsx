@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import {
   clampUnit,
@@ -37,6 +38,10 @@ const REVEAL_MS = 2000;
 function easeOutCubic(t) {
   const x = 1 - t;
   return 1 - x * x * x;
+}
+
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
 function getVideoLoadProgress(video) {
@@ -99,6 +104,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   const [displayLoadPercent, setDisplayLoadPercent] = useState(0);
   const [showLoadingStroke, setShowLoadingStroke] = useState(true);
   const [loadingTextOpacity, setLoadingTextOpacity] = useState(1);
+  const [mounted, setMounted] = useState(false);
 
   const mediaCount = Math.max(1, mediaItems.length);
   const mediaSrcKey = mediaItems.map((m) => `${m.src}:${m.kind ?? "video"}`).join("|");
@@ -266,9 +272,10 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     const tick = (now) => {
       const elapsed = now - relocateStartRef.current;
       const t = Math.min(1, elapsed / RELOCATE_MS);
-      const eased = easeOutCubic(t);
-      relocateProgressRef.current = eased;
-      setLoadingTextOpacity(1 - eased);
+      const relocateEased = easeOutCubic(t);
+      const loadingEased = easeInOutSine(t);
+      relocateProgressRef.current = relocateEased;
+      setLoadingTextOpacity(1 - loadingEased);
       updateMaskAndLoaderPaths();
       if (t < 1) {
         relocateRafRef.current = requestAnimationFrame(tick);
@@ -367,6 +374,10 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   useEffect(() => {
     resetLoadState();
   }, [mediaSrcKey, ringSegmentCount, resetLoadState]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const syncCachedMediaReady = useCallback(() => {
     for (let i = 0; i < ringSegmentCount; i += 1) {
@@ -478,8 +489,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   ]);
 
   const progressLabel = `${displayLoadPercent}%`;
-  const openingVisible = openingPhase !== "done";
-  const loadingTextVisible = openingVisible && (openingPhase === "loading" || loadingTextOpacity > 0);
+  const loadingTextVisible = openingPhase === "loading" || loadingTextOpacity > 0;
   const loadingOverlayOpacity =
     openingPhase === "loading" ? 1 : clampUnit(loadingTextOpacity);
   const loadingTextShift = (1 - loadingOverlayOpacity) * -36;
@@ -489,32 +499,39 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     : { cx: 0, cy: 0 };
   const holeX = ringCenter.cx - innerSize / 2;
   const holeY = ringCenter.cy - innerSize / 2;
+  const loadingPortalTarget =
+    mounted && typeof document !== "undefined" ? document.body : null;
+  const loadingLayer = (
+    <div
+      data-l="LoadingLayer"
+      aria-hidden="true"
+      className={`fixed inset-0 z-[120] bg-[var(--WH)] transition-opacity duration-[1000ms] ease-out ${
+        openingPhase === "done" ? "pointer-events-none" : "pointer-events-auto"
+      }`}
+      style={{ opacity: loadingOverlayOpacity }}
+    >
+      <div data-l="LoadingStage" className="relative h-full w-full">
+        {loadingTextVisible ? (
+          <div
+            data-l="LoadingValue"
+            className="absolute left-1/2 top-1/2 text-[clamp(2.5rem,6vw,5.75rem)] italic leading-none tracking-[-0.06em] text-[var(--TC)] transition-[transform,opacity] duration-[1000ms] ease-out"
+            style={{
+              opacity: loadingOverlayOpacity,
+              transform: `translate(-50%, -50%) translateX(${loadingTextShift}vw)`,
+            }}
+          >
+            {progressLabel}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {openingVisible ? (
-        <div
-          data-l="LoadingLayer"
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[120] bg-[var(--WH)] transition-opacity duration-700 ease-out"
-          style={{ opacity: loadingOverlayOpacity }}
-        >
-          <div data-l="LoadingStage" className="relative h-full w-full">
-            {loadingTextVisible ? (
-              <div
-                data-l="LoadingValue"
-                className="absolute left-1/2 top-1/2 text-[clamp(2.5rem,6vw,5.75rem)] italic leading-none tracking-[-0.06em] text-[var(--TC)] transition-[transform,opacity] duration-700 ease-out"
-                style={{
-                  opacity: loadingOverlayOpacity,
-                  transform: `translate(-50%, -50%) translateX(${loadingTextShift}vw)`,
-                }}
-              >
-                {progressLabel}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {loadingPortalTarget
+        ? createPortal(loadingLayer, loadingPortalTarget)
+        : loadingLayer}
       {canRenderMedia ? (
         <div
           data-l="VideoRingLayer"

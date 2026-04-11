@@ -319,7 +319,7 @@ export default function RingScrollShowcase({
 		<main
 			ref={hostRef}
 			aria-labelledby="ring-showcase-title"
-			className="relative min-h-screen overflow-x-hidden "
+			className="relative min-h-screen overflow-x-hidden text-white"
 		>
 			<h1 id="ring-showcase-title" className="sr-only">
 				{SHOWCASE_TITLE}
