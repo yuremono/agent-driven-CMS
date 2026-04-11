@@ -37,7 +37,7 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 調査、編集、検証、テストをそれぞれ独立した別々のstepとして定義する。
 
 - 1step: 迷わず即実行
-- 2step以上: `task-log` スキルを実行
+- 3step以上: `task-log` スキルを実行
 - 5step以上: `task-large` スキルを実行
 - 4step以下でも影響範囲が広い、設計判断が入るものは`task-large` スキルを実行
 
