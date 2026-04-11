@@ -64,7 +64,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		media: { src: "/video/001.mp4", kind: "video" },
 		contentHtml: `
                 <h2 class="text-[19cqw] leading-none">
-                        <span class="CanvasEffect text-[16cqw] tracking-[-0.11em] ">read the outline</span>
+                        <span class="CanvasEffect text-[16cqw] tracking-[-0.11em] ">Read the outline</span>
                         <span class="CanvasEffect ">輪郭を読む</span>
                 </h2>
                 <p class="mt-8">最初の 90 度は、画面の左端で立ち上がる 1 番の面を見せる。ここが全体の基準点になる。</p>`.trim(),
@@ -74,7 +74,7 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "PhaseSection",
 		media: { src: "/video/002.mp4", kind: "video" },
 		contentHtml: `
-                <h2 class="text-[16cqw] leading-none">
+                <h2 class="text-[16cqw] leading-none hue-rotate-20">
                         <span class="CanvasEffect tracking-[-0.08em] pb-[0.15em]">Shift the phase</span>
                         <span class="CanvasEffect">位相をずらす</span>
                 </h2>
@@ -85,8 +85,8 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "LayerSection",
 		media: { src: "/video/003.mp4", kind: "video" },
 		contentHtml: `
-               <h2 class="text-[19cqw] leading-none">
-                        <span class="CanvasEffect text-[13cqw] tracking-[-0.14em] pb-[0.15em]">layer the membrane</span>
+               <h2 class="text-[19cqw] leading-none hue-rotate-180">
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.14em] pb-[0.15em]">Layer the membrane</span>
                         <span class="CanvasEffect">膜を重ねる</span>
                 </h2>
                 <p class="mt-8">3 番の面は少し明るくして、他の面の上に薄い膜がのるように見せる。重なりを強くしすぎない。</p>`.trim(),
@@ -96,8 +96,8 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		locator: "LoopSection",
 		media: { src: "/video/004.mp4", kind: "video" },
 		contentHtml: `
-                <h2 class="text-[19cqw] leading-none">
-                        <span class="CanvasEffect text-[13cqw] tracking-[-0.115em] ">return to circulation</span>
+                <h2 class="text-[19cqw] leading-none hue-rotate-340">
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.115em] ">Return to circulation</span>
                         <span class="CanvasEffect">循環へ戻す</span>
                 </h2>
                 <p class="mt-8">4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。</p>

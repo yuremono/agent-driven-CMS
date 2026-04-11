@@ -9,7 +9,7 @@ import {
 
 const HOST_CLASS = "CanvasEffect";
 const CANVAS_CLASS = "CanvasEffectCanvas";
-const STEP_MS = 192;
+const STEP_MS = 400;
 const ACTIVE_ROOT_MARGIN_RATIO = 0.5;
 const ACTIVE_ROOT_MARGIN = "50% 0px";
 const DEFAULT_VARIANCE = 0.0;
