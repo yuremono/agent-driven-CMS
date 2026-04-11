@@ -1,0 +1,47 @@
+app/components/RootClientShell.jsx
+  4fe823a21489ea90 5,63
+app/components/RingScrollShowcase.jsx
+  dd5238047c711d90 54,61,65,72,76,83,87,94,98,100,119-122,124-125
+  4fe823a21489ea90 63-64,74-75,85-86,96-97
+app/globals.scss
+  4fe823a21489ea90 70-76,78-91,93,95,100-105,107-108,113-115,117
+app/components/CanvasEffectLayer.jsx
+  4fe823a21489ea90 76-87,113,118,143-152,155-163,165-166,171-172,178,186,189-191,197,205,207,210-215,268-269,275-285
+app/components/EffectWarpDefs.jsx
+  4fe823a21489ea90 1-7,9,26-58,60-66,68-69
+tasks.backup.20260411-182422/20260411_canvas_blob_image_mask.yaml
+  4fe823a21489ea90 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "62f8276a8e5177ee0f15a3b7fff31bc19c072e6c",
+  "prompts": {
+    "4fe823a21489ea90": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7c72-19e7-7e10-ae48-ddf237987ec1",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 602,
+      "total_deletions": 544,
+      "accepted_lines": 166,
+      "overriden_lines": 24
+    },
+    "dd5238047c711d90": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b5cbd3dd-fdce-4975-8c9a-76fbd9107bf0",
+        "model": "composer-2-fast"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 34,
+      "total_deletions": 33,
+      "accepted_lines": 16,
+      "overriden_lines": 10
+    }
+  }
+}
