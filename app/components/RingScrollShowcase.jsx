@@ -27,6 +27,10 @@ import {
 	readShowcasePalette,
 	recenterInfiniteScroll,
 } from "./ringScrollShowcaseGeometry.js";
+import {
+	cancelEveryOtherAnimationFrame,
+	requestEveryOtherAnimationFrame,
+} from "./everyOtherAnimationFrame.js";
 import VideoRingOverlay from "./VideoRingOverlay.jsx";
 
 const LOOP_COPY_COUNT = 3;
@@ -270,13 +274,13 @@ export default function RingScrollShowcase({
 			canvas.style.height = `${height}px`;
 			recenterInfiniteScroll(cycleHeight, LOOP_MIDDLE_COPY_INDEX);
 			if (!frameRef.current) {
-				frameRef.current = window.requestAnimationFrame(render);
+				frameRef.current = requestEveryOtherAnimationFrame(render);
 			}
 		};
 
 		const scheduleRender = () => {
 			if (frameRef.current) return;
-			frameRef.current = window.requestAnimationFrame(render);
+			frameRef.current = requestEveryOtherAnimationFrame(render);
 		};
 
 		scheduleRenderRef.current = scheduleRender;
@@ -303,7 +307,7 @@ export default function RingScrollShowcase({
 			window.removeEventListener("resize", resize);
 			window.removeEventListener("scroll", handleScroll);
 			if (frameRef.current) {
-				window.cancelAnimationFrame(frameRef.current);
+				cancelEveryOtherAnimationFrame(frameRef.current);
 				frameRef.current = ORIGIN;
 			}
 		};

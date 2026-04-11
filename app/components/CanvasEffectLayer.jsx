@@ -2,16 +2,25 @@
 
 import { useEffect } from "react";
 
+import {
+  cancelEveryOtherAnimationFrame,
+  requestEveryOtherAnimationFrame,
+} from "./everyOtherAnimationFrame.js";
+
 const HOST_CLASS = "CanvasEffect";
 const CANVAS_CLASS = "CanvasEffectCanvas";
-const STEP_MS = 96;
+const STEP_MS = 192;
+const ACTIVE_ROOT_MARGIN_RATIO = 0.5;
+const ACTIVE_ROOT_MARGIN = "50% 0px";
 const DEFAULT_VARIANCE = 0.0;
 const DEFAULT_IMAGE_SRC = "/images/home/clip01.png";
 const DEFAULT_CLIP_BACKGROUND_VAR = "--WH";
 const DEFAULT_IMAGE_ALPHA = 1;
 
 const controllers = new Set();
+const controllerByHost = new WeakMap();
 let scanObserver = null;
+let visibilityObserver = null;
 let stepTimer = 0;
 let frameStep = 0;
 
@@ -83,6 +92,21 @@ function loadImage(src) {
   image.decoding = "async";
   image.src = src;
   return image;
+}
+
+function isHostNearViewport(host) {
+  const rect = host.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || 0;
+  const viewportWidth = window.innerWidth || 0;
+  const verticalMargin = viewportHeight * ACTIVE_ROOT_MARGIN_RATIO;
+  const horizontalMargin = viewportWidth * ACTIVE_ROOT_MARGIN_RATIO;
+
+  return (
+    rect.bottom >= -verticalMargin &&
+    rect.top <= viewportHeight + verticalMargin &&
+    rect.right >= -horizontalMargin &&
+    rect.left <= viewportWidth + horizontalMargin
+  );
 }
 
 function drawController(controller, step) {
@@ -220,12 +244,30 @@ function drawController(controller, step) {
 
 function unbindController(controller) {
   controller.resizeObserver.disconnect();
+  visibilityObserver?.unobserve(controller.host);
+  controllerByHost.delete(controller.host);
+  controller.fillImage.onload = null;
   controller.canvas.remove();
   controllers.delete(controller);
 }
 
+function hasActiveControllers() {
+  for (const controller of controllers) {
+    if (controller.active) return true;
+  }
+
+  return false;
+}
+
 function drawAll(step) {
   Array.from(controllers).forEach((controller) => {
+    if (!controller.host.isConnected) {
+      unbindController(controller);
+      return;
+    }
+
+    if (!controller.active) return;
+
     const alive = drawController(controller, step);
     if (!alive) {
       unbindController(controller);
@@ -234,7 +276,7 @@ function drawAll(step) {
 }
 
 function ensureTimer() {
-  if (stepTimer || controllers.size === 0) return;
+  if (stepTimer || !hasActiveControllers()) return;
 
   stepTimer = window.setInterval(() => {
     frameStep += 1;
@@ -243,10 +285,54 @@ function ensureTimer() {
 }
 
 function stopTimerIfIdle() {
-  if (controllers.size !== 0 || !stepTimer) return;
+  if (hasActiveControllers() || !stepTimer) return;
 
   window.clearInterval(stepTimer);
   stepTimer = 0;
+}
+
+function setControllerActive(controller, active) {
+  if (!controller.host.isConnected) {
+    unbindController(controller);
+    return;
+  }
+
+  if (controller.active === active) return;
+
+  controller.active = active;
+
+  if (active) {
+    drawController(controller, frameStep);
+    ensureTimer();
+    return;
+  }
+
+  stopTimerIfIdle();
+}
+
+function getVisibilityObserver() {
+  if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+    return null;
+  }
+
+  if (visibilityObserver) return visibilityObserver;
+
+  visibilityObserver = new window.IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const controller = controllerByHost.get(entry.target);
+        if (!controller) return;
+
+        setControllerActive(
+          controller,
+          entry.isIntersecting || entry.intersectionRatio > 0,
+        );
+      });
+    },
+    { rootMargin: ACTIVE_ROOT_MARGIN },
+  );
+
+  return visibilityObserver;
 }
 
 function bindHost(host) {
@@ -263,14 +349,18 @@ function bindHost(host) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
+  const visibility = getVisibilityObserver();
   const controller = {
+    active: visibility ? isHostNearViewport(host) : true,
     canvas,
     ctx,
     fillCanvas: document.createElement("canvas"),
     fillImage: loadImage(host.dataset.canvasImage || DEFAULT_IMAGE_SRC),
     host,
     resizeObserver: new ResizeObserver(() => {
-      drawController(controller, frameStep);
+      if (controller.active) {
+        drawController(controller, frameStep);
+      }
     }),
     seed: hashString(readText(host)),
   };
@@ -283,12 +373,18 @@ function bindHost(host) {
   host.dataset.canvasEffectSeed = String(hashString(readText(host)));
 
   controller.fillImage.onload = () => {
-    drawController(controller, frameStep);
+    if (controller.active) {
+      drawController(controller, frameStep);
+    }
   };
 
+  controllerByHost.set(host, controller);
+  visibility?.observe(host);
   controller.resizeObserver.observe(host);
   controllers.add(controller);
-  drawController(controller, frameStep);
+  if (controller.active) {
+    drawController(controller, frameStep);
+  }
   ensureTimer();
 }
 
@@ -313,11 +409,19 @@ export default function CanvasEffectLayer() {
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
 
+    let scanFrame = 0;
+    const scheduleScan = () => {
+      if (scanFrame) return;
+
+      scanFrame = requestEveryOtherAnimationFrame(() => {
+        scanFrame = 0;
+        scanCanvasEffects();
+      });
+    };
+
     scanCanvasEffects();
 
-    scanObserver = new MutationObserver(() => {
-      scanCanvasEffects();
-    });
+    scanObserver = new MutationObserver(scheduleScan);
 
     scanObserver.observe(document.body, {
       childList: true,
@@ -328,6 +432,12 @@ export default function CanvasEffectLayer() {
     return () => {
       scanObserver?.disconnect();
       scanObserver = null;
+      visibilityObserver?.disconnect();
+      visibilityObserver = null;
+
+      if (scanFrame) {
+        cancelEveryOtherAnimationFrame(scanFrame);
+      }
 
       controllers.forEach((controller) => {
         unbindController(controller);

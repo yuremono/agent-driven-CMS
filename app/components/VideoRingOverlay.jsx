@@ -18,6 +18,10 @@ import {
   TAU,
 } from "./ringScrollShowcaseGeometry.js";
 import {
+  cancelEveryOtherAnimationFrame,
+  requestEveryOtherAnimationFrame,
+} from "./everyOtherAnimationFrame.js";
+import {
   getLoadPercent,
   getTimedLoadPercent,
   hasAllSectorsReady,
@@ -197,21 +201,21 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
 
   const stopRevealAnimation = useCallback(() => {
     if (revealRafRef.current != null) {
-      cancelAnimationFrame(revealRafRef.current);
+      cancelEveryOtherAnimationFrame(revealRafRef.current);
       revealRafRef.current = null;
     }
   }, []);
 
   const stopRelocateAnimation = useCallback(() => {
     if (relocateRafRef.current != null) {
-      cancelAnimationFrame(relocateRafRef.current);
+      cancelEveryOtherAnimationFrame(relocateRafRef.current);
       relocateRafRef.current = null;
     }
   }, []);
 
   const stopLoadDisplayAnimation = useCallback(() => {
     if (loadDisplayRafRef.current != null) {
-      cancelAnimationFrame(loadDisplayRafRef.current);
+      cancelEveryOtherAnimationFrame(loadDisplayRafRef.current);
       loadDisplayRafRef.current = null;
     }
   }, []);
@@ -241,14 +245,14 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       revealProgressRef.current = t;
       updateMaskAndLoaderPaths();
       if (t < 1) {
-        revealRafRef.current = requestAnimationFrame(tick);
+        revealRafRef.current = requestEveryOtherAnimationFrame(tick);
       } else {
         revealDoneRef.current = true;
         revealRafRef.current = null;
         setOpeningPhaseState("done");
       }
     };
-    revealRafRef.current = requestAnimationFrame(tick);
+    revealRafRef.current = requestEveryOtherAnimationFrame(tick);
   }, [setOpeningPhaseState, stopRevealAnimation, updateMaskAndLoaderPaths]);
 
   const runRelocateAnimation = useCallback(() => {
@@ -278,7 +282,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       setLoadingTextOpacity(1 - loadingEased);
       updateMaskAndLoaderPaths();
       if (t < 1) {
-        relocateRafRef.current = requestAnimationFrame(tick);
+        relocateRafRef.current = requestEveryOtherAnimationFrame(tick);
       } else {
         relocateProgressRef.current = 1;
         relocateRafRef.current = null;
@@ -286,7 +290,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
         runRevealAnimation();
       }
     };
-    relocateRafRef.current = requestAnimationFrame(tick);
+    relocateRafRef.current = requestEveryOtherAnimationFrame(tick);
   }, [runRevealAnimation, setOpeningPhaseState, stopRelocateAnimation, updateMaskAndLoaderPaths]);
 
   const checkAllSectorsReady = useCallback(() => {
@@ -416,10 +420,10 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
         node.play().catch(() => {});
       }
     });
-    const id = requestAnimationFrame(() => {
+    const id = requestEveryOtherAnimationFrame(() => {
       syncCachedMediaReady();
     });
-    return () => cancelAnimationFrame(id);
+    return () => cancelEveryOtherAnimationFrame(id);
   }, [ringSegmentCount, mediaSrcKey, syncCachedMediaReady]);
 
   useEffect(() => {
@@ -467,7 +471,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
           (rawLoadPercentRef.current >= 100 && nextPercent < 100));
 
       if (shouldContinue) {
-        loadDisplayRafRef.current = requestAnimationFrame(tick);
+        loadDisplayRafRef.current = requestEveryOtherAnimationFrame(tick);
         return;
       }
 
@@ -478,7 +482,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     };
 
     if (loadDisplayRafRef.current == null) {
-      loadDisplayRafRef.current = requestAnimationFrame(tick);
+      loadDisplayRafRef.current = requestEveryOtherAnimationFrame(tick);
     }
   }, [
     loadPercent,

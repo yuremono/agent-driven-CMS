@@ -4,6 +4,10 @@ import { CaretDown, PaperPlaneRight, Plus } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
+import {
+  cancelEveryOtherAnimationFrame,
+  requestEveryOtherAnimationFrame,
+} from "./everyOtherAnimationFrame.js";
 
 function TranscriptMessage({ item }) {
   const isUser = item.role === "user";
@@ -96,11 +100,11 @@ export default function DevEditorOverlay() {
   useEffect(() => {
     const node = transcriptViewportRef.current;
     if (!node || !stickToBottomRef.current) return;
-    const frame = window.requestAnimationFrame(() => {
+    const frame = requestEveryOtherAnimationFrame(() => {
       node.scrollTop = node.scrollHeight;
     });
 
-    return () => window.cancelAnimationFrame(frame);
+    return () => cancelEveryOtherAnimationFrame(frame);
   }, [transcript]);
 
   useLayoutEffect(() => {

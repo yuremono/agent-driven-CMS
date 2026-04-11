@@ -4,6 +4,10 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import CanvasEffectLayer from "./CanvasEffectLayer.jsx";
 import EffectWarpDefs from "./EffectWarpDefs.jsx";
+import {
+  cancelEveryOtherAnimationFrame,
+  requestEveryOtherAnimationFrame,
+} from "./everyOtherAnimationFrame.js";
 
 const DevBridgeLayer = dynamic(() => import("./DevBridgeLayer.jsx"), {
   ssr: false,
@@ -33,7 +37,7 @@ export default function RootClientShell({ children }) {
     const scheduleSync = () => {
       if (rafId) return;
 
-      rafId = window.requestAnimationFrame(() => {
+      rafId = requestEveryOtherAnimationFrame(() => {
         rafId = 0;
         syncEffectText();
       });
@@ -52,7 +56,7 @@ export default function RootClientShell({ children }) {
       observer.disconnect();
 
       if (rafId) {
-        window.cancelAnimationFrame(rafId);
+        cancelEveryOtherAnimationFrame(rafId);
       }
     };
   }, []);
