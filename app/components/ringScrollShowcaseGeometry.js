@@ -153,6 +153,8 @@ export function offsetSectionProgress(
 }
 
 // 無限スクロール用に、中央コピーの範囲へスクロール位置を戻す。
+// `html { scroll-behavior: smooth }` があると `scrollTo(x, y)` も補間され、
+// scroll 連打 → リングが勝手に回るため、ここだけは必ず instant にする。
 export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
   if (!cycleHeight) return;
 
@@ -161,9 +163,17 @@ export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
   const currentScrollY = window.scrollY;
 
   if (currentScrollY < lowerBound) {
-    window.scrollTo(0, currentScrollY + cycleHeight);
+    window.scrollTo({
+      left: 0,
+      top: currentScrollY + cycleHeight,
+      behavior: "instant",
+    });
   } else if (currentScrollY >= upperBound) {
-    window.scrollTo(0, currentScrollY - cycleHeight);
+    window.scrollTo({
+      left: 0,
+      top: currentScrollY - cycleHeight,
+      behavior: "instant",
+    });
   }
 }
 
