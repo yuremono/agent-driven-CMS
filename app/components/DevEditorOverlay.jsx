@@ -165,6 +165,27 @@ export default function DevEditorOverlay() {
 		setAttachments(nextAttachments);
 	}
 
+	function handleAttachmentRemove(attachmentId) {
+		const nextAttachments = attachments.filter(
+			(attachment) => attachment.id !== attachmentId,
+		);
+		const removedAttachment = attachments.find(
+			(attachment) => attachment.id === attachmentId,
+		);
+
+		if (removedAttachment?.previewUrl) {
+			URL.revokeObjectURL(removedAttachment.previewUrl);
+		}
+		if (nextAttachments.length === 0 && fileInputRef.current) {
+			fileInputRef.current.value = "";
+		}
+
+		attachmentPreviewUrlsRef.current = nextAttachments
+			.map((attachment) => attachment.previewUrl)
+			.filter(Boolean);
+		setAttachments(nextAttachments);
+	}
+
 	function handleTranscriptScroll(event) {
 		const node = event.currentTarget;
 		const distanceFromBottom =
@@ -239,9 +260,18 @@ export default function DevEditorOverlay() {
 						<div className="mb-2 flex flex-wrap items-center gap-2 px-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
 							{attachments.map((attachment) => (
 								<figure
-									className="m-0 inline-flex max-w-full items-center gap-2 rounded-[8px] border border-[var(--GR10)] bg-[var(--WH50)] px-2 py-1"
+									className="relative m-0 inline-flex max-w-full items-center gap-2 rounded-[8px] border border-[var(--GR10)] bg-[var(--WH50)] px-2 py-1"
 									key={attachment.id}
 								>
+									<button
+										aria-label={`${attachment.name} の添付を解除`}
+										className="absolute right-0 top-0 inline-flex size-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[8px] border border-[var(--GR10)] bg-[var(--WH)] leading-none text-[var(--BK)]"
+										onClick={() => handleAttachmentRemove(attachment.id)}
+										type="button"
+										title="添付を解除"
+									>
+										×
+									</button>
 									{attachment.previewUrl ? (
 										<img
 											alt={attachment.name}
@@ -249,7 +279,7 @@ export default function DevEditorOverlay() {
 											src={attachment.previewUrl}
 										/>
 									) : null}
-									<figcaption className="max-w-48 truncate">
+									<figcaption className="max-w-48 truncate text-black">
 										{attachment.name}
 									</figcaption>
 								</figure>
