@@ -26,12 +26,13 @@ import {
 	readWidRatio,
 	readShowcasePalette,
 	recenterInfiniteScroll,
-} from "./ringScrollShowcaseGeometry.js";
+} from "./ringScrollShowcaseGeometry";
+import type { ShowcaseColorVar } from "./ringScrollShowcaseGeometry";
 import {
 	cancelEveryOtherAnimationFrame,
 	requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame.js";
-import VideoRingOverlay from "./VideoRingOverlay.jsx";
+} from "./everyOtherAnimationFrame";
+import VideoRingOverlay, { type VideoRingOverlayHandle } from "./VideoRingOverlay";
 
 const LOOP_COPY_COUNT = 3;
 const LOOP_MIDDLE_COPY_INDEX = 1;
@@ -51,7 +52,23 @@ const RING_SEGMENTS = [
 	{ id: "2", colorVar: TR },
 	{ id: "3", colorVar: TR },
 	{ id: "4", colorVar: TR },
-];
+] satisfies Array<{ id: string; colorVar: ShowcaseColorVar }>;
+
+type ShowcaseMediaItem = {
+	src: string;
+	kind?: "video" | "image";
+};
+
+type ShowcaseSection = {
+	id: string;
+	locator: string;
+	media: ShowcaseMediaItem;
+	contentHtml?: string;
+};
+
+type RingScrollShowcaseProps = {
+	sections?: ShowcaseSection[];
+};
 
 /**
  * 本文と背景メディアを同じ長さで管理する。`media` は VideoRingOverlay に渡る。
@@ -103,10 +120,17 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
                 <p class="mt-8 TXST">4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。</p>
                 `.trim(),
 	},
-];
+] satisfies ShowcaseSection[];
 
 // 無限スクロールのために同じセクション群を 3 回描画する。
-function SectionCopy({ copyIndex, sections }) {
+
+function SectionCopy({
+	copyIndex,
+	sections,
+}: {
+	copyIndex: number;
+	sections: ShowcaseSection[];
+}) {
 	const isVisibleCopy = copyIndex === LOOP_MIDDLE_COPY_INDEX;
 
 	return (
@@ -135,16 +159,21 @@ function SectionCopy({ copyIndex, sections }) {
 
 export default function RingScrollShowcase({
 	sections: sectionsProp = DEFAULT_SHOWCASE_SECTIONS,
-}) {
+}: RingScrollShowcaseProps) {
 	const mediaItems = useMemo(
 		() => sectionsProp.map((section) => section.media),
 		[sectionsProp],
 	);
-	const canvasRef = useRef(null);
-	const hostRef = useRef(null);
-	const debugRingRef = useRef(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const hostRef = useRef<HTMLElement | null>(null);
+	const debugRingRef = useRef<HTMLDivElement | null>(null);
 	const frameRef = useRef(ORIGIN);
-	const overlayStateRef = useRef(null);
+	const overlayStateRef = useRef<{
+		innerSize: number;
+		ringCenterY: number;
+		viewportHeight: number;
+		viewportWidth: number;
+	} | null>(null);
 	const sectionsRef = useRef(sectionsProp);
 	sectionsRef.current = sectionsProp;
 	const sizeRef = useRef({
@@ -153,7 +182,7 @@ export default function RingScrollShowcase({
 		dpr: DEFAULT_DPR,
 		cycleHeight: MIN_CANVAS_SIZE,
 	});
-	const videoRingApiRef = useRef(null);
+	const videoRingApiRef = useRef<VideoRingOverlayHandle | null>(null);
 	const scheduleRenderRef = useRef(() => {});
 	const requestVideoRingRedraw = useCallback(() => {
 		scheduleRenderRef.current?.();

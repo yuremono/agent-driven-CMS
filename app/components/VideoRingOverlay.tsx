@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useId,
@@ -18,39 +19,69 @@ import {
   getVideoRingPathOuterRadius,
   MD_DOWN_MEDIA_QUERY,
   TAU,
-} from "./ringScrollShowcaseGeometry.js";
+} from "./ringScrollShowcaseGeometry";
 import {
   cancelEveryOtherAnimationFrame,
   requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame.js";
+} from "./everyOtherAnimationFrame";
 import {
   getLoadPercent,
   getTimedLoadPercent,
   hasAllSectorsReady,
   isVideoReadyForOpening,
-} from "./videoRingOverlayProgress.js";
+} from "./videoRingOverlayProgress";
+
+type OpeningPhase = "loading" | "relocating" | "revealing" | "done";
+
+type MediaItem = {
+  src: string;
+  kind?: "video" | "image";
+};
+
+type RingGeometry = {
+  cx: number;
+  cy: number;
+  innerRadius: number;
+  outerRadius: number;
+  rotation: number;
+  segmentCount: number;
+};
+
+type VideoRingOverlayProps = {
+  innerSize: number;
+  mediaItems?: MediaItem[];
+  onLayoutReady?: () => void;
+  ringCenterY: number;
+  ringSegmentCount: number;
+  viewportHeight: number;
+  viewportWidth: number;
+};
+
+export type VideoRingOverlayHandle = {
+  setRingGeometry: (payload: RingGeometry) => void;
+};
 
 const DEFAULT_MEDIA_ITEMS = [
   { src: "/video/001.mp4", kind: "video" },
   { src: "/video/002.mp4", kind: "video" },
   { src: "/video/003.mp4", kind: "video" },
   { src: "/video/004.mp4", kind: "video" },
-];
+] satisfies MediaItem[];
 
 const MIN_LOADING_MS = 1000;
 const RELOCATE_MS = 1500;
 const REVEAL_MS = 2000;
 
-function easeOutCubic(t) {
+function easeOutCubic(t: number): number {
   const x = 1 - t;
   return 1 - x * x * x;
 }
 
-function easeInOutSine(t) {
+function easeInOutSine(t: number): number {
   return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
-function getVideoLoadProgress(video) {
+function getVideoLoadProgress(video: unknown): number {
   if (!(video instanceof HTMLVideoElement)) return 0;
 
   const duration = Number(video.duration);
@@ -70,7 +101,7 @@ function getVideoLoadProgress(video) {
   return 0;
 }
 
-const VideoRingOverlay = forwardRef(function VideoRingOverlay(
+const VideoRingOverlay = forwardRef<VideoRingOverlayHandle, VideoRingOverlayProps>(function VideoRingOverlay(
   {
     innerSize,
     mediaItems = DEFAULT_MEDIA_ITEMS,
@@ -82,30 +113,30 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   },
   ref,
 ) {
-  const maskPathRefs = useRef([]);
-  const loaderStrokePathRefs = useRef([]);
-  const geometryRef = useRef(null);
-  const openingPhaseRef = useRef("loading");
+  const maskPathRefs = useRef<Array<SVGPathElement | null>>([]);
+  const loaderStrokePathRefs = useRef<Array<SVGPathElement | null>>([]);
+  const geometryRef = useRef<RingGeometry | null>(null);
+  const openingPhaseRef = useRef<OpeningPhase>("loading");
   const revealProgressRef = useRef(0);
   const revealDoneRef = useRef(false);
-  const revealRafRef = useRef(null);
+  const revealRafRef = useRef<number | null>(null);
   const revealStartRef = useRef(0);
   const relocateProgressRef = useRef(0);
-  const relocateRafRef = useRef(null);
+  const relocateRafRef = useRef<number | null>(null);
   const relocateStartRef = useRef(0);
   const pendingStartRef = useRef(false);
-  const videoRefs = useRef([]);
-  const imgRefs = useRef([]);
-  const sectorReadyRef = useRef([]);
-  const sectorLoadProgressRef = useRef([]);
+  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const imgRefs = useRef<Array<HTMLImageElement | null>>([]);
+  const sectorReadyRef = useRef<boolean[]>([]);
+  const sectorLoadProgressRef = useRef<number[]>([]);
   const rawLoadPercentRef = useRef(0);
   const displayLoadPercentRef = useRef(0);
-  const loadDisplayRafRef = useRef(null);
+  const loadDisplayRafRef = useRef<number | null>(null);
   const loadingStartRef = useRef(0);
   const reactId = useId();
   const maskIdBase = `vring-${reactId.replace(/:/g, "")}`;
 
-  const [openingPhase, setOpeningPhase] = useState("loading");
+  const [openingPhase, setOpeningPhase] = useState<OpeningPhase>("loading");
   const [loadPercent, setLoadPercent] = useState(0);
   const [displayLoadPercent, setDisplayLoadPercent] = useState(0);
   const [showLoadingStroke, setShowLoadingStroke] = useState(true);
@@ -115,7 +146,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   const mediaCount = Math.max(1, mediaItems.length);
   const mediaSrcKey = mediaItems.map((m) => `${m.src}:${m.kind ?? "video"}`).join("|");
 
-  const setOpeningPhaseState = useCallback((nextPhase) => {
+  const setOpeningPhaseState = useCallback((nextPhase: OpeningPhase) => {
     openingPhaseRef.current = nextPhase;
     setOpeningPhase(nextPhase);
   }, []);
@@ -137,7 +168,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     );
   }, [ringCenterY, viewportHeight, viewportWidth]);
 
-  const setDisplayLoadPercentState = useCallback((nextPercent) => {
+  const setDisplayLoadPercentState = useCallback((nextPercent: number) => {
     displayLoadPercentRef.current = nextPercent;
     setDisplayLoadPercent(nextPercent);
   }, []);
@@ -151,7 +182,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   }, [ringSegmentCount]);
 
   const commitLoadProgress = useCallback(
-    (sectorIndex, nextProgress) => {
+    (sectorIndex: number, nextProgress: number) => {
       sectorLoadProgressRef.current[sectorIndex] = clampUnit(nextProgress);
       updateLoadPercent();
     },
@@ -245,7 +276,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     }
 
     revealStartRef.current = performance.now();
-    const tick = (now) => {
+    const tick = (now: number) => {
       const elapsed = now - revealStartRef.current;
       const t = Math.min(1, elapsed / REVEAL_MS);
       revealProgressRef.current = t;
@@ -279,7 +310,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     }
 
     relocateStartRef.current = performance.now();
-    const tick = (now) => {
+    const tick = (now: number) => {
       const elapsed = now - relocateStartRef.current;
       const t = Math.min(1, elapsed / RELOCATE_MS);
       const relocateEased = easeOutCubic(t);
@@ -317,7 +348,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   }, [checkAllSectorsReady, runRelocateAnimation, updateLoadPercent]);
 
   const markSectorReady = useCallback(
-    (sectorIndex) => {
+    (sectorIndex: number) => {
       if (sectorReadyRef.current[sectorIndex]) return;
       sectorReadyRef.current[sectorIndex] = true;
       sectorLoadProgressRef.current[sectorIndex] = 1;
@@ -358,7 +389,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
   useImperativeHandle(
     ref,
     () => ({
-      setRingGeometry(payload) {
+      setRingGeometry(payload: RingGeometry) {
         if (
           !payload ||
           typeof payload.cx !== "number" ||
@@ -458,7 +489,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
       return;
     }
 
-    const tick = (now) => {
+    const tick = (now: number) => {
       if (!loadingStartRef.current) {
         loadingStartRef.current = now;
       }
@@ -607,7 +638,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
               markSectorReady(sectorIndex);
             };
 
-            const markProgress = (event) => {
+            const markProgress = (event: SyntheticEvent<HTMLVideoElement>) => {
               const video = event.currentTarget;
               if (isVideoReadyForOpening(video.readyState)) {
                 markSectorReady(sectorIndex);

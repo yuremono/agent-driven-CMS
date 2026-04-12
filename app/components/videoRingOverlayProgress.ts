@@ -1,10 +1,10 @@
-export function clamp01(value) {
+export function clamp01(value: unknown): number {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;
   return Math.min(1, Math.max(0, numeric));
 }
 
-export function averageProgress(values) {
+export function averageProgress(values: unknown): number {
   if (!Array.isArray(values) || values.length === 0) return 0;
 
   let total = 0;
@@ -21,17 +21,21 @@ export function averageProgress(values) {
   return total / count;
 }
 
-export function getLoadPercent(values) {
+export function getLoadPercent(values: unknown): number {
   return Math.round(averageProgress(values) * 100);
 }
 
-export function clampPercent(value) {
+export function clampPercent(value: unknown): number {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;
   return Math.min(100, Math.max(0, Math.round(numeric)));
 }
 
-export function getTimedLoadPercent(actualPercent, elapsedMs, minimumDurationMs = 1000) {
+export function getTimedLoadPercent(
+  actualPercent: unknown,
+  elapsedMs: unknown,
+  minimumDurationMs = 1000,
+): number {
   const safeActualPercent = clampPercent(actualPercent);
   const safeMinimumDurationMs = Number(minimumDurationMs);
 
@@ -48,24 +52,33 @@ export function getTimedLoadPercent(actualPercent, elapsedMs, minimumDurationMs 
   return Math.min(safeActualPercent, timedCap);
 }
 
-export function hasAllSectorsReady(readyFlags, segmentCount) {
+export function hasAllSectorsReady(
+  readyFlags: unknown,
+  segmentCount: unknown,
+): boolean {
   if (!Array.isArray(readyFlags)) return false;
-  if (!Number.isFinite(segmentCount) || segmentCount <= 0) return false;
+  const numericSegmentCount = Number(segmentCount);
+  if (!Number.isFinite(numericSegmentCount) || numericSegmentCount <= 0) return false;
 
-  for (let i = 0; i < segmentCount; i += 1) {
+  for (let i = 0; i < numericSegmentCount; i += 1) {
     if (!readyFlags[i]) return false;
   }
 
   return true;
 }
 
-export function isVideoReadyForOpening(readyState) {
+export function isVideoReadyForOpening(readyState: unknown): boolean {
   const numeric = Number(readyState);
   if (!Number.isFinite(numeric)) return false;
   return numeric >= 3;
 }
 
-export function getOpeningCenterX(viewportWidth, progress, startX = viewportWidth / 2, endX = 0) {
+export function getOpeningCenterX(
+  viewportWidth: number,
+  progress: unknown,
+  startX = viewportWidth / 2,
+  endX = 0,
+): number {
   const t = clamp01(progress);
   return startX + (endX - startX) * t;
 }

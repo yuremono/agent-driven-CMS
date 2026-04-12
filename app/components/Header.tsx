@@ -55,7 +55,7 @@ function DesktopNav() {
             <Link
                                 href={item.href}
                                 target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC]  "
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-[var(--TC)]  "
             >
               {item.label}
             </Link>
@@ -97,7 +97,7 @@ function MobileMenu() {
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
 
-    const onKeyDown = (event) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
       }
@@ -136,7 +136,7 @@ function MobileMenu() {
       >
         <button
           type="button"
-          className="absolute inset-0 bg-[--WH]"
+          className="absolute inset-0 bg-[var(--WH)]"
           onClick={() => setOpen(false)}
           tabIndex={-1}
           aria-label="メニューを閉じる"
@@ -144,7 +144,7 @@ function MobileMenu() {
 
         <div
           id="mobile-header-drawer"
-          className={`bg-white relative flex h-full w-full flex-col bg-[--WH] transition-[opacity,transform]  ease-out ${
+          className={`relative flex h-full w-full flex-col bg-[var(--WH)] transition-[opacity,transform]  ease-out ${
             open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           }`}
         >
@@ -154,7 +154,7 @@ function MobileMenu() {
                 <li className="">
                   <Link
                     href="/"
-                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[var(--TC)]"
                     onClick={() => setOpen(false)}
                   >
              HOME
@@ -165,7 +165,7 @@ function MobileMenu() {
                   <Link
                                       href={item.href}
                                       target="_blank" rel="noopener noreferrer"
-                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[var(--TC)]"
                     onClick={() => setOpen(false)}
                   >
                     {item.label}
@@ -177,7 +177,7 @@ function MobileMenu() {
                   <Link
                                       href={item.href}
                                       target="_blank" rel="noopener noreferrer"
-                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[var(--TC)]"
                     onClick={() => setOpen(false)}
                   >
                     {item.label}

@@ -9,7 +9,7 @@ import {
   getVideoRingPathOuterRadius,
   getViewportRingSectorSvgPathDs,
   TAU,
-} from "../app/components/ringScrollShowcaseGeometry.js";
+} from "../app/components/ringScrollShowcaseGeometry";
 
 test("getRingSectorSvgPathD returns closed path with arcs", () => {
   const d = getRingSectorSvgPathD(100, 100, 20, 80, 0, TAU / 4);

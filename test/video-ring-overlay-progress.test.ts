@@ -7,7 +7,7 @@ import {
   getTimedLoadPercent,
   hasAllSectorsReady,
   isVideoReadyForOpening,
-} from "../app/components/videoRingOverlayProgress.js";
+} from "../app/components/videoRingOverlayProgress";
 
 test("getLoadPercent averages partial sector progress", () => {
   assert.equal(getLoadPercent([0, 0.25, 0.5, 1]), 44);

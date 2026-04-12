@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import {
   cancelEveryOtherAnimationFrame,
   requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame.js";
+} from "./everyOtherAnimationFrame";
 
 const HOST_CLASS = "CanvasEffect";
 const CANVAS_CLASS = "CanvasEffectCanvas";
@@ -17,18 +17,34 @@ const DEFAULT_IMAGE_SRC = "/images/clip01.png";
 const DEFAULT_CLIP_BACKGROUND_VAR = "--WH";
 const DEFAULT_IMAGE_ALPHA = 1;
 
-const controllers = new Set();
-const controllerByHost = new WeakMap();
-let scanObserver = null;
-let visibilityObserver = null;
+type LetterSpacingCanvasContext = CanvasRenderingContext2D & {
+  letterSpacing?: string;
+};
+
+type CanvasEffectController = {
+  active: boolean;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  fillCanvas: HTMLCanvasElement;
+  fillCtx: CanvasRenderingContext2D;
+  fillImage: HTMLImageElement;
+  host: HTMLElement;
+  resizeObserver: ResizeObserver;
+  seed: number;
+};
+
+const controllers = new Set<CanvasEffectController>();
+const controllerByHost = new WeakMap<HTMLElement, CanvasEffectController>();
+let scanObserver: MutationObserver | null = null;
+let visibilityObserver: IntersectionObserver | null = null;
 let stepTimer = 0;
 let frameStep = 0;
 
-function clamp(value, min, max) {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function hashString(input) {
+function hashString(input: string): number {
   let hash = 2166136261;
 
   for (let index = 0; index < input.length; index += 1) {
@@ -39,12 +55,12 @@ function hashString(input) {
   return hash >>> 0;
 }
 
-function pseudoRandom(seed, step, index) {
+function pseudoRandom(seed: number, step: number, index: number): number {
   const value = Math.sin(seed * 0.0001 + step * 12.9898 + index * 78.233) * 43758.5453;
   return value - Math.floor(value);
 }
 
-function readVariance(host) {
+function readVariance(host: HTMLElement): number {
   const raw = host.dataset.canvasVariance;
   if (!raw) return DEFAULT_VARIANCE;
 
@@ -52,7 +68,7 @@ function readVariance(host) {
   return Number.isFinite(parsed) ? clamp(parsed, 0.04, 0.5) : DEFAULT_VARIANCE;
 }
 
-function readClipBackground(host, styles) {
+function readClipBackground(host: HTMLElement, styles: CSSStyleDeclaration): string {
   const raw = host.dataset.canvasBackground;
   if (raw) {
     return raw.startsWith("--") ? styles.getPropertyValue(raw).trim() || raw : raw;
@@ -61,7 +77,7 @@ function readClipBackground(host, styles) {
   return styles.getPropertyValue(DEFAULT_CLIP_BACKGROUND_VAR).trim() || "#fff";
 }
 
-function readImageAlpha(host) {
+function readImageAlpha(host: HTMLElement): number {
   const raw = host.dataset.canvasImageAlpha;
   if (!raw) return DEFAULT_IMAGE_ALPHA;
 
@@ -69,11 +85,18 @@ function readImageAlpha(host) {
   return Number.isFinite(parsed) ? clamp(parsed, 0, 1) : DEFAULT_IMAGE_ALPHA;
 }
 
-function readText(host) {
+function readText(host: HTMLElement): string {
   return host.textContent?.replace(/\s+/g, " ").trim() ?? "";
 }
 
-function syncHostBox(host, canvas, width, height, padding, dpr) {
+function syncHostBox(
+  host: HTMLElement,
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  padding: number,
+  dpr: number,
+): void {
   canvas.width = Math.max(1, Math.round(width * dpr));
   canvas.height = Math.max(1, Math.round(height * dpr));
   canvas.style.width = `${width}px`;
@@ -82,19 +105,24 @@ function syncHostBox(host, canvas, width, height, padding, dpr) {
   canvas.style.top = `-${padding}px`;
 }
 
-function syncOffscreenBox(canvas, width, height, dpr) {
+function syncOffscreenBox(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  dpr: number,
+): void {
   canvas.width = Math.max(1, Math.round(width * dpr));
   canvas.height = Math.max(1, Math.round(height * dpr));
 }
 
-function loadImage(src) {
+function loadImage(src: string): HTMLImageElement {
   const image = new Image();
   image.decoding = "async";
   image.src = src;
   return image;
 }
 
-function isHostNearViewport(host) {
+function isHostNearViewport(host: HTMLElement): boolean {
   const rect = host.getBoundingClientRect();
   const viewportHeight = window.innerHeight || 0;
   const viewportWidth = window.innerWidth || 0;
@@ -109,7 +137,7 @@ function isHostNearViewport(host) {
   );
 }
 
-function drawController(controller, step) {
+function drawController(controller: CanvasEffectController, step: number): boolean {
   const { host, canvas, ctx } = controller;
 
   if (!host.isConnected) return false;
@@ -151,9 +179,10 @@ function drawController(controller, step) {
   ctx.strokeStyle = "#fff";
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
-  if ("letterSpacing" in ctx) {
+  const spacedCtx = ctx as LetterSpacingCanvasContext;
+  if ("letterSpacing" in spacedCtx) {
     try {
-      ctx.letterSpacing = `${letterSpacing}px`;
+      spacedCtx.letterSpacing = `${letterSpacing}px`;
     } catch {
       // Ignore browsers that expose the property but reject assignment.
     }
@@ -178,9 +207,10 @@ function drawController(controller, step) {
   fillCtx.strokeStyle = "#000";
   fillCtx.lineJoin = "round";
   fillCtx.lineCap = "round";
-  if ("letterSpacing" in fillCtx) {
+  const spacedFillCtx = fillCtx as LetterSpacingCanvasContext;
+  if ("letterSpacing" in spacedFillCtx) {
     try {
-      fillCtx.letterSpacing = `${letterSpacing}px`;
+      spacedFillCtx.letterSpacing = `${letterSpacing}px`;
     } catch {
       // Ignore browsers that expose the property but reject assignment.
     }
@@ -242,7 +272,7 @@ function drawController(controller, step) {
   return true;
 }
 
-function unbindController(controller) {
+function unbindController(controller: CanvasEffectController): void {
   controller.resizeObserver.disconnect();
   visibilityObserver?.unobserve(controller.host);
   controllerByHost.delete(controller.host);
@@ -251,7 +281,7 @@ function unbindController(controller) {
   controllers.delete(controller);
 }
 
-function hasActiveControllers() {
+function hasActiveControllers(): boolean {
   for (const controller of controllers) {
     if (controller.active) return true;
   }
@@ -259,7 +289,7 @@ function hasActiveControllers() {
   return false;
 }
 
-function drawAll(step) {
+function drawAll(step: number): void {
   Array.from(controllers).forEach((controller) => {
     if (!controller.host.isConnected) {
       unbindController(controller);
@@ -275,7 +305,7 @@ function drawAll(step) {
   });
 }
 
-function ensureTimer() {
+function ensureTimer(): void {
   if (stepTimer || !hasActiveControllers()) return;
 
   stepTimer = window.setInterval(() => {
@@ -284,14 +314,17 @@ function ensureTimer() {
   }, STEP_MS);
 }
 
-function stopTimerIfIdle() {
+function stopTimerIfIdle(): void {
   if (hasActiveControllers() || !stepTimer) return;
 
   window.clearInterval(stepTimer);
   stepTimer = 0;
 }
 
-function setControllerActive(controller, active) {
+function setControllerActive(
+  controller: CanvasEffectController,
+  active: boolean,
+): void {
   if (!controller.host.isConnected) {
     unbindController(controller);
     return;
@@ -310,7 +343,7 @@ function setControllerActive(controller, active) {
   stopTimerIfIdle();
 }
 
-function getVisibilityObserver() {
+function getVisibilityObserver(): IntersectionObserver | null {
   if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
     return null;
   }
@@ -320,6 +353,7 @@ function getVisibilityObserver() {
   visibilityObserver = new window.IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
+        if (!(entry.target instanceof HTMLElement)) return;
         const controller = controllerByHost.get(entry.target);
         if (!controller) return;
 
@@ -335,7 +369,7 @@ function getVisibilityObserver() {
   return visibilityObserver;
 }
 
-function bindHost(host) {
+function bindHost(host: HTMLElement): void {
   if (host.dataset.canvasEffectBound === "1") return;
 
   const existingCanvas = host.querySelector(`:scope > .${CANVAS_CLASS}`);
@@ -350,11 +384,16 @@ function bindHost(host) {
   if (!ctx) return;
 
   const visibility = getVisibilityObserver();
-  const controller = {
+  const fillCanvas = document.createElement("canvas");
+  const fillCtx = fillCanvas.getContext("2d");
+  if (!fillCtx) return;
+
+  const controller: CanvasEffectController = {
     active: visibility ? isHostNearViewport(host) : true,
     canvas,
     ctx,
-    fillCanvas: document.createElement("canvas"),
+    fillCanvas,
+    fillCtx,
     fillImage: loadImage(host.dataset.canvasImage || DEFAULT_IMAGE_SRC),
     host,
     resizeObserver: new ResizeObserver(() => {
@@ -364,10 +403,6 @@ function bindHost(host) {
     }),
     seed: hashString(readText(host)),
   };
-
-  controller.fillCtx = controller.fillCanvas.getContext("2d");
-
-  if (!controller.fillCtx) return;
 
   host.dataset.canvasEffectBound = "1";
   host.dataset.canvasEffectSeed = String(hashString(readText(host)));
@@ -388,7 +423,7 @@ function bindHost(host) {
   ensureTimer();
 }
 
-function scanCanvasEffects(root = document) {
+function scanCanvasEffects(root: ParentNode = document): void {
   const hosts = Array.from(root.querySelectorAll(`.${HOST_CLASS}`));
 
   hosts.forEach((host) => {

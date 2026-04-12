@@ -1,17 +1,22 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { ComponentType, ReactNode } from "react";
 import { useEffect } from "react";
-import CanvasEffectLayer from "./CanvasEffectLayer.jsx";
-import EffectWarpDefs from "./EffectWarpDefs.jsx";
+import CanvasEffectLayer from "./CanvasEffectLayer";
+import EffectWarpDefs from "./EffectWarpDefs";
 import {
   cancelEveryOtherAnimationFrame,
   requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame.js";
+} from "./everyOtherAnimationFrame";
 
-const DevBridgeLayer = dynamic(() => import("./DevBridgeLayer.jsx"), {
-  ssr: false,
-});
+const DevBridgeLayer = dynamic(
+  () =>
+    import("./DevBridgeLayer.jsx").then(
+      (mod) => mod.default as unknown as ComponentType<Record<string, never>>,
+    ),
+  { ssr: false },
+);
 
 function syncEffectText(root = document) {
   const nodes = root.querySelectorAll(".effect, .effect > *");
@@ -28,7 +33,7 @@ function syncEffectText(root = document) {
   });
 }
 
-export default function RootClientShell({ children }) {
+export default function RootClientShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
 

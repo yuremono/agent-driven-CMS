@@ -9,6 +9,23 @@ export const BK = "--BK"; // 黒（パレット解決用。キャンバス背景
 export const WH = "--WH"; // 白（パレット解決用）
 export const TR = "--TR"; // トランスペアレント／下地：ドーナツ4扇「以外」のキャンバス塗り
 
+export type ShowcaseColorVar =
+  | typeof MC
+  | typeof SC
+  | typeof AC
+  | typeof BC
+  | typeof TC
+  | typeof GR
+  | typeof BK
+  | typeof WH
+  | typeof TR;
+
+export type ShowcasePalette = Record<ShowcaseColorVar, string>;
+
+export type RingSegment = {
+  color: string;
+};
+
 // 座標や描画の基準になる共通値。
 export const ORIGIN = 0;
 export const HALF_RATIO = 0.5;
@@ -35,7 +52,7 @@ export const SEGMENT_SPAN = TAU / SEGMENT_COUNT;
 export const SCROLL_PHASE_OFFSET_SECTIONS = 0.5;
 
 /** 文字列の色を RGB に分解（toRgba 用） */
-function parseCssColor(color) {
+function parseCssColor(color: unknown): { r: number; g: number; b: number } | null {
   if (typeof color !== "string") return null;
 
   const trimmed = color.trim();
@@ -68,7 +85,7 @@ function parseCssColor(color) {
 }
 
 /** 解決済み色文字列にアルファを付与（将来の装飾用） */
-export function toRgba(color, alpha) {
+export function toRgba(color: unknown, alpha: number): string {
   const rgb = parseCssColor(color);
   if (!rgb) return typeof color === "string" ? color : "transparent";
 
@@ -76,13 +93,13 @@ export function toRgba(color, alpha) {
 }
 
 // 1周分の角度を扱いやすくするため、値を 0〜2π に折り返す。
-export function wrapAngle(value) {
+export function wrapAngle(value: number): number {
   const wrapped = value % TAU;
   return wrapped < ORIGIN ? wrapped + TAU : wrapped;
 }
 
 // CSS カスタムプロパティの値を 0〜1 の比率へ正規化する。
-function normalizeRatio(value, fallback) {
+function normalizeRatio(value: string, fallback: number): number {
   const trimmed = value.trim();
   if (!trimmed) return fallback;
 
@@ -101,7 +118,16 @@ function normalizeRatio(value, fallback) {
 }
 
 // ドーナツの各 90° 扇形を塗る（色は segments[].color = 解決済みの --MC 等）。
-function drawSegmentBand(ctx, cx, cy, innerRadius, outerRadius, startAngle, endAngle, fillStyle) {
+function drawSegmentBand(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number,
+  fillStyle: string,
+): void {
   const startCos = Math.cos(startAngle);
   const startSin = Math.sin(startAngle);
   const endCos = Math.cos(endAngle);
@@ -121,18 +147,25 @@ function drawSegmentBand(ctx, cx, cy, innerRadius, outerRadius, startAngle, endA
 }
 
 // ring の見える幅は CSS 変数 `--wid` から読む。
-export function readWidRatio(host) {
+export function readWidRatio(host: Element): number {
   const rawValue = window.getComputedStyle(host).getPropertyValue(WID_CSS_VAR);
   return normalizeRatio(rawValue, RING_VISIBLE_RATIO_FALLBACK);
 }
 
-export function getVideoRingPathOuterRadius(outerRadius, isMdDown) {
+export function getVideoRingPathOuterRadius(
+  outerRadius: number,
+  isMdDown: boolean,
+): number {
   if (!isMdDown) return outerRadius;
   return outerRadius * VIDEO_RING_PATH_OUTER_RADIUS_MD_DOWN_SCALE;
 }
 
 // いまのスクロール位置を、現在のセクション総数に対する進行度へ変換する。
-export function measureScrollState(host, sectionCount) {
+export function measureScrollState(host: Element, sectionCount: number): {
+  cycleHeight: number;
+  localScroll: number;
+  sectionProgress: number;
+} {
   const viewportHeight = window.innerHeight || MIN_CANVAS_SIZE;
   const hostTop = host.getBoundingClientRect().top + window.scrollY;
   const cycleHeight = viewportHeight * sectionCount;
@@ -145,24 +178,27 @@ export function measureScrollState(host, sectionCount) {
   };
 }
 
-function wrapSectionProgress(value, sectionCount) {
+function wrapSectionProgress(value: number, sectionCount: number): number {
   const wrapped = value % sectionCount;
   return wrapped < ORIGIN ? wrapped + sectionCount : wrapped;
 }
 
 // スクロールの基準点を、セクションの開始ではなく見せたい位相へずらす。
 export function offsetSectionProgress(
-  sectionProgress,
-  sectionCount,
+  sectionProgress: number,
+  sectionCount: number,
   offsetSections = SCROLL_PHASE_OFFSET_SECTIONS,
-) {
+): number {
   return wrapSectionProgress(sectionProgress + offsetSections, sectionCount);
 }
 
 // 無限スクロール用に、中央コピーの範囲へスクロール位置を戻す。
 // `html { scroll-behavior: smooth }` があると `scrollTo(x, y)` も補間され、
 // scroll 連打 → リングが勝手に回るため、ここだけは必ず instant にする。
-export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
+export function recenterInfiniteScroll(
+  cycleHeight: number,
+  middleCopyIndex: number,
+): void {
   if (!cycleHeight) return;
 
   const lowerBound = cycleHeight * middleCopyIndex;
@@ -187,13 +223,18 @@ export function recenterInfiniteScroll(cycleHeight, middleCopyIndex) {
 /**
  * キャンバス全体の下地。ドーナツ 4 扇以外は単色 `--TR`（線形／放射グラデーションは使わない）。
  */
-export function drawBackground(ctx, width, height, palette) {
+export function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  palette: ShowcasePalette,
+): void {
   ctx.fillStyle = palette[TR];
   ctx.fillRect(ORIGIN, ORIGIN, width, height);
 }
 
 // Canvas の drawSegmentBand と同じドーナツ扇形を SVG path の d にする（マスク用）。
-function fmtPathCoord(value) {
+function fmtPathCoord(value: number): string {
   if (!Number.isFinite(value)) return "0";
   const rounded = Number(value.toFixed(4));
   return Object.is(rounded, -0) ? "0" : String(rounded);
@@ -207,7 +248,14 @@ function fmtPathCoord(value) {
  * @param {number} startAngle - ラジアン（drawRing 内の未回転座標系）
  * @param {number} endAngle - ラジアン
  */
-export function getRingSectorSvgPathD(cx, cy, innerRadius, outerRadius, startAngle, endAngle) {
+export function getRingSectorSvgPathD(
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number,
+): string {
   const startCos = Math.cos(startAngle);
   const startSin = Math.sin(startAngle);
   const endCos = Math.cos(endAngle);
@@ -236,7 +284,13 @@ export function getRingSectorSvgPathD(cx, cy, innerRadius, outerRadius, startAng
 /**
  * リングの各セクタ用 SVG path（index 0..segmentCount-1）。角度は drawRing と同じ基準。
  */
-export function getRingSectorSvgPathDs(cx, cy, innerRadius, outerRadius, segmentCount) {
+export function getRingSectorSvgPathDs(
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  segmentCount: number,
+): string[] {
   const span = TAU / segmentCount;
   return Array.from({ length: segmentCount }, (_, index) => {
     const startAngle = index * span;
@@ -250,13 +304,13 @@ export function getRingSectorSvgPathDs(cx, cy, innerRadius, outerRadius, segment
  * 動画を fixed 全画面に置くときはラッパを回転させず、この配列だけ更新する。
  */
 export function getViewportRingSectorSvgPathDs(
-  cx,
-  cy,
-  innerRadius,
-  outerRadius,
-  segmentCount,
-  rotation,
-) {
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  segmentCount: number,
+  rotation: number,
+): string[] {
   const span = TAU / segmentCount;
   return Array.from({ length: segmentCount }, (_, index) => {
     const startAngle = rotation + index * span;
@@ -265,18 +319,26 @@ export function getViewportRingSectorSvgPathDs(
   });
 }
 
-export function clampUnit(value) {
+export function clampUnit(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(1, Math.max(0, value));
 }
 
-export function getMediaReadyPercent(readyCount, totalCount) {
+export function getMediaReadyPercent(
+  readyCount: number,
+  totalCount: number,
+): number {
   if (!Number.isFinite(totalCount) || totalCount <= 0) return 0;
   const safeReadyCount = Number.isFinite(readyCount) ? readyCount : 0;
   return Math.round((Math.min(totalCount, Math.max(0, safeReadyCount)) / totalCount) * 100);
 }
 
-export function getOpeningRingCenter(viewportWidth, viewportHeight, ringCenterY, progress) {
+export function getOpeningRingCenter(
+  viewportWidth: number,
+  viewportHeight: number,
+  ringCenterY: number,
+  progress: number,
+): { cx: number; cy: number } {
   const t = clampUnit(progress);
   const startX = viewportWidth * HALF_RATIO;
   const startY = viewportHeight * HALF_RATIO;
@@ -290,7 +352,15 @@ export function getOpeningRingCenter(viewportWidth, viewportHeight, ringCenterY,
 }
 
 // 4 区画を塗りつぶしの扇形として描く（各 segment.color は --MC〜--BC の解決値）。
-export function drawRing(ctx, cx, cy, outerRadius, innerRadius, rotation, segments) {
+export function drawRing(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  outerRadius: number,
+  innerRadius: number,
+  rotation: number,
+  segments: RingSegment[],
+): void {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rotation);
@@ -303,7 +373,7 @@ export function drawRing(ctx, cx, cy, outerRadius, innerRadius, rotation, segmen
 }
 
 // CSS 変数から、canvas 用に解決済みの色パレットを作る（getPropertyValue で実色の文字列が入る）。
-export function readShowcasePalette() {
+export function readShowcasePalette(): ShowcasePalette {
   const rootStyle = window.getComputedStyle(document.documentElement);
 
   return {
