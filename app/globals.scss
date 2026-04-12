@@ -314,9 +314,9 @@
         -webkit-text-fill-color: transparent;
         -webkit-text-stroke: .125em var(--TR);
         paint-order: stroke;
-        color: var(--TR);
-        background-image: linear-gradient(var(--BC), var(--MC));
-        background-clip: text;
+        color: var(--MC);
+        background-image: none;
+        background-clip: initial;
 
 }
 
@@ -486,9 +486,8 @@
           min-height: 0;
           flex-direction: column;
           justify-content: flex-end;
-          border: 1px solid rgba(38, 27, 18, 0.1);
+          border: 1px solid var(--BK10);
           border-radius: 32px;
-          box-shadow: 0 22px 72px var(--TC10);
         //   backdrop-filter: blur(28px);
           padding: 1em;
         }
@@ -507,12 +506,6 @@
                         border-radius: 100px;
                 }
         }
-        .editorDock {
-                box-shadow: 0 22px 72px var(--TC10);
-        }
-        
-        
-        
         .editorTranscriptList {
           display: grid;
           gap: 0.9rem;
@@ -540,7 +533,7 @@
         
         .editorTranscriptBubble {
           /* max-width: min(100%, 74ch); */
-          border: 1px solid rgba(38, 27, 18, 0.1);
+          border: 1px solid var(--BK10);
           border-radius: 22px;
           padding: 0.9rem 1rem;
           white-space: pre-wrap;
@@ -548,15 +541,15 @@
         }
         
         .editorTranscriptBubbleUser {
-          background: rgba(255, 255, 255, 0.78);
+          background: var(--WH70);
         }
         
         .editorTranscriptBubbleAssistant {
-          background: rgba(255, 255, 255, 0.56);
+          background: var(--WH50);
         }
         
         .editorTranscriptBubbleError {
-          background: rgba(182, 83, 37, 0.12);
+          background: var(--AC10);
         }
         
         @media (min-width: 768px) {
