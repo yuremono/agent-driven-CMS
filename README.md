@@ -32,6 +32,8 @@ GitHub Pages では `app/` の公開ページを Next.js static export として
 npm run build:pages
 ```
 
+プレビューURL: https://yuremono.github.io/agent-driven-CMS/
+
 ### Provider 切替
 
 - 既定は Codex です。`npm run dev` は従来どおり Codex で起動します。
