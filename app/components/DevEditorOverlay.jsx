@@ -7,7 +7,7 @@ import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 import {
   cancelEveryOtherAnimationFrame,
   requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame.js";
+} from "./everyOtherAnimationFrame";
 
 function TranscriptMessage({ item }) {
   const isUser = item.role === "user";

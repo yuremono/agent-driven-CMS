@@ -1,4 +1,4 @@
 export {
   cancelEveryOtherAnimationFrame,
   requestEveryOtherAnimationFrame,
-} from "./everyOtherAnimationFrame";
+} from "./everyOtherAnimationFrame.ts";
