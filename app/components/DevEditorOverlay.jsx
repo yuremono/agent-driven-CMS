@@ -15,6 +15,8 @@ import {
 	requestEveryOtherAnimationFrame,
 } from "./everyOtherAnimationFrame";
 
+const imageExtensionPattern = /\.(?:apng|avif|gif|jpe?g|png|svg|webp)$/i;
+
 function TranscriptMessage({ item }) {
 	const isUser = item.role === "user";
 	const isError = item.status === "error";
@@ -84,7 +86,8 @@ export default function DevEditorOverlay() {
 	const textareaRef = useRef(null);
 	const transcriptViewportRef = useRef(null);
 	const stickToBottomRef = useRef(true);
-	const [attachmentNames, setAttachmentNames] = useState([]);
+	const attachmentPreviewUrlsRef = useRef([]);
+	const [attachments, setAttachments] = useState([]);
 	const [dockHeight, setDockHeight] = useState(0);
 	const [isComposerCollapsed, setIsComposerCollapsed] = useState(false);
 	const [isTranscriptCollapsed, setIsTranscriptCollapsed] = useState(false);
@@ -119,6 +122,14 @@ export default function DevEditorOverlay() {
 		return () => cancelEveryOtherAnimationFrame(frame);
 	}, [transcript]);
 
+	useEffect(() => {
+		return () => {
+			for (const url of attachmentPreviewUrlsRef.current) {
+				URL.revokeObjectURL(url);
+			}
+		};
+	}, []);
+
 	useLayoutEffect(() => {
 		const textarea = textareaRef.current;
 		if (!textarea) return;
@@ -133,7 +144,25 @@ export default function DevEditorOverlay() {
 
 	function handleAttachmentChange(event) {
 		const files = Array.from(event.currentTarget.files ?? []);
-		setAttachmentNames(files.map((file) => file.name));
+		for (const url of attachmentPreviewUrlsRef.current) {
+			URL.revokeObjectURL(url);
+		}
+
+		const nextAttachments = files.map((file, index) => {
+			const previewUrl = imageExtensionPattern.test(file.name)
+				? URL.createObjectURL(file)
+				: null;
+
+			return {
+				id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+				name: file.name,
+				previewUrl,
+			};
+		});
+		attachmentPreviewUrlsRef.current = nextAttachments
+			.map((attachment) => attachment.previewUrl)
+			.filter(Boolean);
+		setAttachments(nextAttachments);
 	}
 
 	function handleTranscriptScroll(event) {
@@ -143,12 +172,6 @@ export default function DevEditorOverlay() {
 		stickToBottomRef.current = distanceFromBottom < 24;
 	}
 
-	const attachmentLabel =
-		attachmentNames.length > 0
-			? attachmentNames.length === 1
-				? attachmentNames[0]
-				: `${attachmentNames.length} files attached`
-			: "ファイルを添付";
 	const showComposerHint = input.trim().length === 0;
 	const hasUserTranscript = transcript.some((item) => item.role === "user");
 	const isTranscriptHidden = isComposerCollapsed || isTranscriptCollapsed;
@@ -212,6 +235,27 @@ export default function DevEditorOverlay() {
 					ref={dockRef}
 					className={`editorDock w-full rounded-[38px] bg-[var(--WH40)] py-2 pl-14 pr-2 backdrop-blur-lg transition-opacity duration-200 ${composerVisibilityClass}`}
 				>
+					{attachments.length > 0 ? (
+						<div className="mb-2 flex flex-wrap items-center gap-2 px-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
+							{attachments.map((attachment) => (
+								<figure
+									className="m-0 inline-flex max-w-full items-center gap-2 rounded-[8px] border border-[var(--GR10)] bg-[var(--WH50)] px-2 py-1"
+									key={attachment.id}
+								>
+									{attachment.previewUrl ? (
+										<img
+											alt={attachment.name}
+											className="size-12 shrink-0 rounded-[8px] object-cover"
+											src={attachment.previewUrl}
+										/>
+									) : null}
+									<figcaption className="max-w-48 truncate">
+										{attachment.name}
+									</figcaption>
+								</figure>
+							))}
+						</div>
+					) : null}
 					<form
 						className="flex items-end gap-2 max-md:flex-wrap"
 						onSubmit={handleSubmit}
@@ -295,16 +339,6 @@ export default function DevEditorOverlay() {
 						</button>
 						{/* </div> */}
 					</form>
-
-					{attachmentNames.length > 0 ? (
-						<div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
-							{attachmentNames.length > 0 ? (
-								<span className="inline-flex items-center rounded-full border border-[var(--GR10)] bg-white/55 px-3 py-1">
-									{attachmentLabel}
-								</span>
-							) : null}
-						</div>
-					) : null}
 				</section>
 				<button
 					aria-controls="editor-composer-panel editor-transcript-log"
