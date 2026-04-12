@@ -1,7 +1,9 @@
 @import "tailwindcss/index.css";
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
 @config "../tailwind.config.js";
 @source "./**/*.{js,jsx,ts,tsx,mdx}";
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
+
+
 :root {//font
         --Ser: "Shippori Mincho","Noto Serif JP", serif;
            // "Noto Sans JP",
@@ -490,6 +492,7 @@
           border-radius: 32px;
         //   backdrop-filter: blur(28px);
           padding: 1em;
+          height: 100%;
         }
         
         
