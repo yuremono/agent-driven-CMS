@@ -13,7 +13,7 @@ const STEP_MS = 400;
 const ACTIVE_ROOT_MARGIN_RATIO = 0.5;
 const ACTIVE_ROOT_MARGIN = "50% 0px";
 const DEFAULT_VARIANCE = 0.0;
-const DEFAULT_IMAGE_SRC = "/images/home/clip01.png";
+const DEFAULT_IMAGE_SRC = "/images/clip01.png";
 const DEFAULT_CLIP_BACKGROUND_VAR = "--WH";
 const DEFAULT_IMAGE_ALPHA = 1;
 

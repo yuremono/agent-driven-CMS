@@ -6,10 +6,10 @@
   color-scheme: light;
   /* --- テーマ色（Canvas は readShowcasePalette で参照。ドーナツ4扇は --MC〜--BC）--- */
   --TR: transparent; /* キャンバス背景・穴まわり：4扇以外の塗り */
-  --MC: oklch(55% 0.14 43); /* 扇形1 */
-  --SC: oklch(40% 0.06 235); /* 扇形2 */
-  --AC: oklch(48% 0.12 43); /* 扇形3 */
-  --BC: oklch(96% 0.01 80); /* 扇形4・ページ下地 */
+  --MC: oklch(0.89 0.05 196); /* 扇形1 */
+  --SC: oklch(0.96 0.12 108); /* 扇形2 */
+  --AC: oklch(0.82 0.05 18); /* 扇形3 */
+  --BC: oklch(0.96 0.03 106); /* 扇形4・ページ下地 */
   --second: var(--SC);
   --third: oklch(62% 0.25 29);
   --fourth: oklch(45% 0.3 264);
@@ -46,7 +46,7 @@
   --HLH: 1.375;
   --FW: 400;
   --FZ: clamp(14px,1.4vw,16px);
-  --trans: 400ms linear;
+  --trans: 200ms ease-in-out;
   --tw-duration: var(--trans);
   --default-transition-timing-function: var(--trans);
 
@@ -75,7 +75,7 @@
         --menuBG: unset;
         --menuC: currentcolor;
     --bargap:calc(var(--btnH) * .4 );
-    --menuC:var(--BK70);
+    --menuC:var(--WH);
     --spanH:2px;
     --spanR:000px;
     --deg: 150deg;
@@ -151,6 +151,9 @@
                 height: var(--dotW);
                 background-color: var(--menuC);
                 border-radius: calc(var(--dotW)/2 );
+                border: 0.125rem solid  var(--BK);
+                box-sizing: content-box;
+
                 &:is(:has(.char) *){
                     transform: translateY(calc(var(--bargap)*-0.5));
                 }
@@ -214,7 +217,7 @@
 
 .HeaderLogo{
         font-size: 8vw;
-        background: url(/images/home/clip01.png) repeat center/20vw;
+        background: url(/images/clip01.png) repeat center/20vw;
         filter: grayscale(50%);
         // border: 10px solid transparent; /* 1. 枠線の幅を確保 */
         // border-left-width: 0;
@@ -225,17 +228,25 @@
         // padding: 1rem;
         // padding-left: 0;
         aspect-ratio: 1/2;
-        // border-image-source: url(/images/home/clip01.png); /* 2. 画像のパス */
-        // border-image-slice: 30; /* 3. 画像の分割位置（必要に応じて調整） */
-        // border-image-repeat: round; /* 4. 画像の繰り返し方（stretch/repeat/round） */
-        // border-image-repeat: stretch; /* 4. 画像の繰り返し方（stretch/repeat/round） */
+        transition: var(--trans);
+        &:hover{
+                scale: 1.06;
+        }
 }
 .HeaderLogoText{
         display: block;
         height: 100%;
         align-content: center;
         background-color: #fff;
-        color: var(--BK70);
+        >span{
+                font-weight: 700;
+                -webkit-text-stroke: .025em var(--BK50);
+                paint-order:stroke;
+                background: url(/images/clip01.png) repeat 70% 50%/10vw;
+                background-color: #fff;
+                background-clip: text;
+                color: var(--TR);
+        }
         // border: 1rem solid transparent; /* 1. 枠線の幅を確保 */
 }
 .Header{
@@ -243,7 +254,7 @@
         a:not(.HeaderLogo){
                 font-size: 1.25rem;
                 color: var(--WH);
-                -webkit-text-stroke: .25em var(--BK);
+                -webkit-text-stroke: .125em var(--BK70);
                 paint-order:stroke;
                 &:hover{
                         color: var(--MC);
@@ -251,6 +262,10 @@
                 // border: 1rem solid transparent; /* 1. 枠線の幅を確保 */
         }
 } 
+.TXST {
+        -webkit-text-stroke: .25em var(--BK50);
+        paint-order:stroke;
+}
 
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
 :root {//font

@@ -21,13 +21,13 @@ const actionItems = [
     href: "https://github.com/yuremono/creative-demos",
     label: "CreativeDemos",
     className:
-      "px-3 py-2  transition ",
+      "px-3 py-2   ",
   },
   {
     href: "https://yuremono.github.io/BurnYourOwnStyle/rects",
     label: "RandomRects",
     className:
-      "px-3 py-2  transition ",
+      "px-3 py-2   ",
   },
 ];
 
@@ -35,7 +35,7 @@ function BrandLockup() {
   return (
     <Link href="/" className="HeaderLogo absolute w-[var(--logoW)] top-1/2 left-0 translate-y-[-50%] pointer-events-auto" aria-label="Agent Driven CMS ホーム">
       <span className="HeaderLogoText ">
-              わ
+              <span>わ</span>
         {/* <img
           src={logo.src}
           alt={logo.alt}
@@ -53,7 +53,8 @@ function DesktopNav() {
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
-              href={item.href}
+                                href={item.href}
+                                target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC]  "
             >
               {item.label}
@@ -69,7 +70,9 @@ function HeaderActions() {
   return (
     <div className="HeaderItems hidden md:grid  pointer-events-auto text-right">
       {actionItems.map((item) => (
-        <Link key={item.href} href={item.href} className={item.className}>
+              <Link
+              target="_blank" rel="noopener noreferrer" 
+                      key={item.href} href={item.href} className={item.className}>
           {item.label}
         </Link>
       ))}
@@ -160,7 +163,8 @@ function MobileMenu() {
               {navItems.map((item) => (
                 <li key={item.href} className="">
                   <Link
-                    href={item.href}
+                                      href={item.href}
+                                      target="_blank" rel="noopener noreferrer"
                     className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
                     onClick={() => setOpen(false)}
                   >
@@ -171,7 +175,8 @@ function MobileMenu() {
               {actionItems.map((item) => (
                 <li key={item.href} className="">
                   <Link
-                    href={item.href}
+                                      href={item.href}
+                                      target="_blank" rel="noopener noreferrer"
                     className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
                     onClick={() => setOpen(false)}
                   >
