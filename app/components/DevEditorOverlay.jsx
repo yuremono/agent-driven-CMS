@@ -150,6 +150,7 @@ export default function DevEditorOverlay() {
 				: `${attachmentNames.length} files attached`
 			: "ファイルを添付";
 	const showComposerHint = input.trim().length === 0;
+	const hasUserTranscript = transcript.some((item) => item.role === "user");
 	const isTranscriptHidden = isComposerCollapsed || isTranscriptCollapsed;
 	const composerVisibilityClass = isComposerCollapsed
 		? "pointer-events-none opacity-0"
@@ -179,33 +180,35 @@ export default function DevEditorOverlay() {
 						viewportRef={transcriptViewportRef}
 					/>
 				</div>
-				<button
-					aria-controls="editor-transcript-log"
-					aria-label={
-						isTranscriptCollapsed
-							? "チャットログを表示"
-							: "チャットログを閉じる"
-					}
-					aria-pressed={isTranscriptCollapsed}
-					className={`editorIconButton absolute bottom-2 right-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10)] bg-[var(--WH70)] transition hover:bg-[var(--WH)] ${transcriptToggleVisibilityClass}`}
-					onClick={() => setIsTranscriptCollapsed((current) => !current)}
-					tabIndex={isComposerCollapsed ? -1 : undefined}
-					type="button"
-					title={
-						isTranscriptCollapsed
-							? "チャットログを表示"
-							: "ログを閉じる"
-					}
-				>
-					<ArrowsOutLineVerticalIcon size={20} weight="regular" />
-				</button>
+				{hasUserTranscript ? (
+					<button
+						aria-controls="editor-transcript-log"
+						aria-label={
+							isTranscriptCollapsed
+								? "チャットログを表示"
+								: "チャットログを閉じる"
+						}
+						aria-pressed={isTranscriptCollapsed}
+						className={`editorIconButton absolute bottom-2 right-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10)] bg-[var(--WH70)] transition hover:bg-[var(--WH)] ${transcriptToggleVisibilityClass}`}
+						onClick={() => setIsTranscriptCollapsed((current) => !current)}
+						tabIndex={isComposerCollapsed ? -1 : undefined}
+						type="button"
+						title={
+							isTranscriptCollapsed
+								? "チャットログを表示"
+								: "ログを閉じる"
+						}
+					>
+						<ArrowsOutLineVerticalIcon size={20} weight="regular" />
+					</button>
+				) : null}
 			</div>
 
 			<div className="relative">
 				<section
 					aria-hidden={isComposerCollapsed}
 					id="editor-composer-panel"
-					inert={isComposerCollapsed ? "" : undefined}
+					inert={isComposerCollapsed || undefined}
 					ref={dockRef}
 					className={`editorDock w-full rounded-[38px] bg-[var(--WH40)] py-2 pl-14 pr-2 backdrop-blur-lg transition-opacity duration-200 ${composerVisibilityClass}`}
 				>
