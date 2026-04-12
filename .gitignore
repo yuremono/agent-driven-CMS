@@ -8,8 +8,6 @@ coverage
 .env.local
 .env.*.local
 *.log
-.claude/
-.codex/
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
