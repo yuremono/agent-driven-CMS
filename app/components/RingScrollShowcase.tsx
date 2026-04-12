@@ -114,8 +114,8 @@ export const DEFAULT_SHOWCASE_SECTIONS = [
 		media: { src: "/video/004.mp4", kind: "video" },
 		contentHtml: `
                 <h2 class="text-[19cqw] leading-none hue-rotate-340">
-                        <span class="CanvasEffect text-[13cqw] tracking-[-0.12em] ">Return to circulation</span>
-                        <span class="CanvasEffect">循環へ戻す</span>
+                        <span class="CanvasEffect text-[13cqw] tracking-[-0.12em] ">Back to route</span>
+                        <span class="CanvasEffect">旅路へ戻る</span>
                 </h2>
                 <p class="mt-8 TXST">4 番の面まで来たら、次の 90 度で 1 番に戻る。内容は普通の縦長サイトで、位相だけが回る。</p>
                 `.trim(),

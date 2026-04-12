@@ -254,7 +254,7 @@ export default function DevEditorOverlay() {
 					id="editor-composer-panel"
 					inert={isComposerCollapsed || undefined}
 					ref={dockRef}
-					className={`editorDock w-full rounded-[38px] bg-[var(--WH40)] py-2 pl-14 pr-2 backdrop-blur-lg transition-opacity duration-200 ${composerVisibilityClass}`}
+					className={`editorDock w-full rounded-[30px] bg-[var(--WH40)] py-2 pl-14 pr-2 backdrop-blur-lg transition-opacity duration-200 ${composerVisibilityClass}`}
 				>
 					{attachments.length > 0 ? (
 						<div className="mb-2 flex flex-wrap items-center gap-2 px-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
