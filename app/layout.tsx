@@ -1,15 +1,7 @@
 import "./globals.scss";
-import { Shippori_Mincho } from "next/font/google";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import RootClientShell from "./components/RootClientShell";
-
-const shipporiMincho = Shippori_Mincho({
-  display: "swap",
-  subsets: ["latin"],
-  variable: "--font-shippori-mincho",
-  weight: ["400", "800"],
-});
 
 export const metadata: Metadata = {
   title: "Northstar Studio",
@@ -18,7 +10,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ja" className={shipporiMincho.variable}>
+    <html lang="ja">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap"
+        />
+      </head>
       <body className="siteBody">
         <RootClientShell>{children}</RootClientShell>
       </body>
