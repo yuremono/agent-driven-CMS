@@ -75,7 +75,6 @@ claude auth status --json
 - Claude Code は `claude auth status --json` を使って認証状態を確認する。
 - Claude の切替は起動時のみで、ブラウザから login/logout/rate limits を操作しない。
 - ブラウザ UI は公開ページ上に重なる編集チャットインプットとして表示される。
-- `/` はトップページ、`/services` はサービスページとして機能する。
 
 ## Claude v1 の制約
 
