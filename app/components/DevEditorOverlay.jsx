@@ -179,7 +179,7 @@ export default function DevEditorOverlay() {
             <textarea
               aria-label="Editor prompt"
               ref={textareaRef}
-              className="editorComposerInput block w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-2 not-only-of-type: outline-none"
+              className="editorComposerInput block w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 not-only-of-type: outline-none"
               onChange={(event) => setInput(event.target.value)}
               placeholder=""
               rows={1}

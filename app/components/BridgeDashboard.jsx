@@ -11,20 +11,20 @@ import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 
 const shellClass = "shell adminShell mx-auto grid min-h-screen max-w-[1180px] gap-6";
 const heroClass =
-  "hero grid gap-6 rounded-[32px] border border-[rgba(42,31,20,0.08)] bg-[linear-gradient(135deg,rgba(255,255,255,0.62),rgba(255,255,255,0.16)),linear-gradient(180deg,rgba(181,83,35,0.12),rgba(255,255,255,0.2))] p-8 shadow-[0_18px_48px_rgba(39,24,12,0.12)] backdrop-blur";
+  "hero grid gap-6 rounded-[32px] border border-[var(--TC10)] bg-[var(--WH70)] p-8 backdrop-blur";
 const panelClass =
-  "panel rounded-[24px] border border-[rgba(38,27,18,0.1)] bg-white/80 p-5 shadow-[0_18px_48px_rgba(39,24,12,0.12)] backdrop-blur";
+  "panel rounded-[24px] border border-[var(--TC10)] bg-[var(--WH80)] p-5 backdrop-blur";
 const headerLabelClass =
-  'm-0 font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[11px] uppercase tracking-[0.18em] text-[#214d66]';
+  'm-0 font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[11px] uppercase tracking-[0.18em] text-[var(--SC)]';
 const titleClass =
-  'font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] tracking-[-0.03em] text-[#1d1712]';
-const mutedClass = "text-[#685f55]";
+  'font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] tracking-[-0.03em] text-[var(--TC)]';
+const mutedClass = "text-[var(--GR)]";
 const chipClass =
-  "inline-flex rounded-full bg-white/70 px-3 py-1.5 text-sm text-[#685f55] ring-1 ring-[rgba(38,27,18,0.08)]";
+  "inline-flex rounded-full bg-[var(--WH70)] px-3 py-1.5 text-sm text-[var(--GR)] ring-1 ring-[var(--TC10)]";
 const secondaryButtonClass =
-  "inline-flex w-fit items-center justify-center rounded-full border border-[rgba(32,77,102,0.16)] bg-white/70 px-4 py-2.5 text-sm text-[#214d66] transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-60";
+  "inline-flex w-fit items-center justify-center rounded-full border bg-[var(--WH70)] px-4 py-2.5 text-sm text-[var(--SC)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-60";
 const primaryButtonClass =
-  "inline-flex w-fit items-center justify-center rounded-full bg-[#b55323] px-5 py-3 text-sm font-medium text-white transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-60";
+  "inline-flex w-fit items-center justify-center rounded-full bg-[var(--MC)] px-5 py-3 text-sm font-medium text-[var(--WH)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-60";
 
 function PanelHeader({ title, description }) {
   return (
@@ -108,7 +108,7 @@ export default function BridgeDashboard() {
 						<div>
 							<span className={headerLabelClass}>status</span>
 							<div
-								className={`mt-1 text-base font-medium text-[#1d1712]`}
+								className="mt-1 text-base font-medium text-[var(--TC)]"
 							>
 								{statusLabel}
 							</div>
@@ -142,7 +142,7 @@ export default function BridgeDashboard() {
 						) : null}
 					</div>
 
-					<div className="grid gap-3 rounded-[22px] bg-white/65 p-4 ring-1 ring-[rgba(38,27,18,0.08)]">
+					<div className="grid gap-3 rounded-[22px] bg-[var(--WH70)] p-4 ring-1 ring-[var(--TC10)]">
 						<div className="flex items-center justify-between gap-3">
 							<span className={headerLabelClass}>
 								rate limits
@@ -157,12 +157,12 @@ export default function BridgeDashboard() {
 						</div>
 						{supportsRateLimits && rateLimitSummary ? (
 							<>
-								<strong className="text-[#1d1712]">
+								<strong className="text-[var(--TC)]">
 									{rateLimitSummary.label}
 								</strong>
-								<div className="h-2 overflow-hidden rounded-full bg-[rgba(32,77,102,0.1)]">
+								<div className="h-2 overflow-hidden rounded-full bg-[var(--SC10)]">
 									<span
-										className="block h-full rounded-full bg-[#214d66]"
+										className="block h-full rounded-full bg-[var(--SC)]"
 										style={{
 											width: `${Math.min(Math.max(rateLimitSummary.usedPercent ?? 0, 0), 100)}%`,
 										}}
@@ -209,17 +209,17 @@ export default function BridgeDashboard() {
 				<form className="mt-4 grid gap-3" onSubmit={handleSubmit}>
 					<textarea
 						aria-label="Composer prompt"
-						className="min-h-[112px] w-full resize-y rounded-2xl border border-[rgba(38,27,18,0.1)] bg-white/75 px-4 py-3 text-[#1d1712] outline-none placeholder:text-[--GR]"
+						className="min-h-[112px] w-full resize-y rounded-2xl border border-[var(--TC10)] bg-[var(--WH70)] px-4 py-3 text-[var(--TC)] outline-none placeholder:text-[var(--GR)]"
 						value={input}
 						onChange={(event) => setInput(event.target.value)}
 						placeholder="サービスページの導入文をもっと短くして"
 						rows={4}
 					/>
 					{modelOptions.length > 0 ? (
-						<label className="grid gap-2 text-sm text-[#685f55]">
+						<label className="grid gap-2 text-sm text-[var(--GR)]">
 							<span>Model</span>
 							<select
-								className="rounded-2xl border border-[rgba(38,27,18,0.1)] bg-white/75 px-4 py-3 text-[#1d1712] outline-none"
+								className="rounded-2xl border border-[var(--TC10)] bg-[var(--WH70)] px-4 py-3 text-[var(--TC)] outline-none"
 								value={selectedModel}
 								onChange={(event) =>
 									setSelectedModel(event.target.value)
@@ -274,13 +274,13 @@ export default function BridgeDashboard() {
 					</div>
 
 					{showAuthHelp ? (
-						<div className="grid gap-2 rounded-[22px] bg-white/65 p-4 ring-1 ring-[rgba(38,27,18,0.08)]">
+						<div className="grid gap-2 rounded-[22px] bg-[var(--WH70)] p-4 ring-1 ring-[var(--TC10)]">
 							<p
 								className={`m-0 text-sm leading-7 ${mutedClass}`}
 							>
 								{authHelp.description}
 							</p>
-							<pre className="overflow-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]">
+							<pre className="overflow-auto rounded-2xl bg-[var(--TC)] px-4 py-3 text-sm leading-7 text-[var(--BC)]">
 								{authHelp.command}
 							</pre>
 						</div>
@@ -358,11 +358,11 @@ export default function BridgeDashboard() {
 						title="Agent Reply"
 						description="直近の応答をそのまま追えます。"
 					/>
-					<div className="mt-4 grid gap-3 rounded-[22px] bg-white/65 p-4 ring-1 ring-[rgba(38,27,18,0.08)]">
+					<div className="mt-4 grid gap-3 rounded-[22px] bg-[var(--WH70)] p-4 ring-1 ring-[var(--TC10)]">
 						<p className={`m-0 text-sm ${mutedClass}`}>
 							turn: {currentTurnId ?? "none"}
 						</p>
-						<div className="whitespace-pre-wrap rounded-2xl bg-white px-4 py-3 leading-7 text-[#1d1712] ring-1 ring-[rgba(38,27,18,0.08)]">
+						<div className="whitespace-pre-wrap rounded-2xl bg-[var(--WH)] px-4 py-3 leading-7 text-[var(--TC)] ring-1 ring-[var(--TC10)]">
 							{replyText || "まだ回答はありません。"}
 						</div>
 					</div>
@@ -385,12 +385,12 @@ export default function BridgeDashboard() {
 										{planSteps.map((step, index) => (
 											<li
 												key={`${step.step ?? index}-${index}`}
-												className="flex items-start justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3"
+												className="flex items-start justify-between gap-4 rounded-2xl bg-[var(--WH70)] px-4 py-3"
 											>
-												<span className="max-w-[70%] leading-7 text-[#1d1712]">
+												<span className="max-w-[70%] leading-7 text-[var(--TC)]">
 													{step.step ?? "step"}
 												</span>
-												<strong className="shrink-0 text-sm uppercase tracking-[0.14em] text-[#214d66]">
+												<strong className="shrink-0 text-sm uppercase tracking-[0.14em] text-[var(--SC)]">
 													{step.status ?? "pending"}
 												</strong>
 											</li>
@@ -398,7 +398,7 @@ export default function BridgeDashboard() {
 									</ol>
 								) : null}
 								{supportsDiff ? (
-									<pre className="max-h-[320px] overflow-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]">
+									<pre className="max-h-[320px] overflow-auto rounded-2xl bg-[var(--TC)] px-4 py-3 text-sm leading-7 text-[var(--BC)]">
 										{turnDiff || "まだ diff はありません。"}
 									</pre>
 								) : null}
@@ -443,10 +443,10 @@ export default function BridgeDashboard() {
 								return (
 									<article
 										key={request.requestId}
-										className="grid gap-3 rounded-[22px] bg-white/70 p-4 ring-1 ring-[rgba(38,27,18,0.08)]"
+										className="grid gap-3 rounded-[22px] bg-[var(--WH70)] p-4 ring-1 ring-[var(--TC10)]"
 									>
 										<div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-											<strong className="text-[#1d1712]">
+											<strong className="text-[var(--TC)]">
 												{requestTitle(request.method)}
 											</strong>
 											<span
@@ -468,7 +468,7 @@ export default function BridgeDashboard() {
 												className={`m-0 grid gap-1 text-sm leading-7 ${mutedClass}`}
 											>
 												<span>cmd</span>
-												<code className="overflow-x-auto rounded-xl bg-[#1d1712] px-3 py-2 text-[#f7f2ea]">
+												<code className="overflow-x-auto rounded-xl bg-[var(--TC)] px-3 py-2 text-[var(--BC)]">
 													{params.command}
 												</code>
 											</p>
@@ -478,7 +478,7 @@ export default function BridgeDashboard() {
 												className={`m-0 grid gap-1 text-sm leading-7 ${mutedClass}`}
 											>
 												<span>cwd</span>
-												<code className="overflow-x-auto rounded-xl bg-[#1d1712] px-3 py-2 text-[#f7f2ea]">
+												<code className="overflow-x-auto rounded-xl bg-[var(--TC)] px-3 py-2 text-[var(--BC)]">
 													{params.cwd}
 												</code>
 											</p>
@@ -488,7 +488,7 @@ export default function BridgeDashboard() {
 												className={`m-0 grid gap-1 text-sm leading-7 ${mutedClass}`}
 											>
 												<span>root</span>
-												<code className="overflow-x-auto rounded-xl bg-[#1d1712] px-3 py-2 text-[#f7f2ea]">
+												<code className="overflow-x-auto rounded-xl bg-[var(--TC)] px-3 py-2 text-[var(--BC)]">
 													{params.grantRoot}
 												</code>
 											</p>
@@ -500,7 +500,7 @@ export default function BridgeDashboard() {
 													(change, index) => (
 														<pre
 															key={`${change.path ?? "change"}-${index}`}
-															className="overflow-x-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]"
+															className="overflow-x-auto rounded-2xl bg-[var(--TC)] px-4 py-3 text-sm leading-7 text-[var(--BC)]"
 														>
 															{`${change.kind ?? "change"}: ${change.path ?? "unknown"}\n${change.diff ?? ""}`}
 														</pre>
@@ -565,7 +565,7 @@ export default function BridgeDashboard() {
 							events.map((event, index) => (
 								<pre
 									key={index}
-									className="overflow-x-auto rounded-2xl bg-[#1d1712] px-4 py-3 text-sm leading-7 text-[#f7f2ea]"
+									className="overflow-x-auto rounded-2xl bg-[var(--TC)] px-4 py-3 text-sm leading-7 text-[var(--BC)]"
 								>
 									{JSON.stringify(event, null, 2)}
 								</pre>
@@ -579,7 +579,7 @@ export default function BridgeDashboard() {
 						title="Notes"
 						description="運用時に忘れたくない前提を残します。"
 					/>
-					<ul className="mt-4 grid gap-3 pl-5 text-[#685f55]">
+					<ul className="mt-4 grid gap-3 pl-5 text-[var(--GR)]">
 						<li>API key は repo に置かない</li>
 						<li>
 							認証状態は provider ごとに bridge 側で確認してから

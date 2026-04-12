@@ -14,7 +14,7 @@ function ProductRail({ items, reverse = false }) {
       {items.map((item) => (
         <div
           key={item.src}
-          className="shrink-0 rounded-2xl bg-white/70 p-1 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+          className="shrink-0 rounded-2xl bg-[var(--WH70)] p-1"
           style={{ width: item.width ?? 270 }}
         >
           <Image
@@ -33,9 +33,9 @@ function ProductRail({ items, reverse = false }) {
 
 export default function MainSections() {
   return (
-		<main id="contents_wrap" className="bg-[#fbfaf7]">
+		<main id="contents_wrap" className="bg-[var(--BC)]">
 			<section className="mx-auto max-w-[1440px] px-4 pt-4 lg:px-8">
-				<div className="relative overflow-hidden rounded-[2rem] bg-white shadow-[0_24px_80px_rgba(34,24,10,0.08)]">
+				<div className="relative overflow-hidden rounded-[2rem] bg-[var(--WH)]">
 					<div className="grid min-h-[540px] gap-0 md:grid-cols-[1.25fr_0.85fr]">
 						<div className="relative min-h-[340px] overflow-hidden">
 							<Image
@@ -46,8 +46,8 @@ export default function MainSections() {
 								sizes="(min-width: 768px) 60vw, 100vw"
 								className="object-cover"
 							/>
-							<div className="absolute inset-0 bg-gradient-to-tr from-black/12 via-transparent to-transparent" />
-							<div className="absolute left-4 bottom-6 max-w-[34rem] text-white md:left-10 md:bottom-10">
+							<div className="absolute inset-0 bg-[var(--BK10)]" />
+							<div className="absolute left-4 bottom-6 max-w-[34rem] text-[var(--WH)] md:left-10 md:bottom-10">
 								<p className="budoux em-clip mb-4 text-[clamp(2rem,4.5vw,4.75rem)] leading-none">
 									<em className="block">
 										70 Years
@@ -60,7 +60,7 @@ export default function MainSections() {
 								</p>
 							</div>
 						</div>
-						<div className="grid gap-0 bg-[#f9f7f2] md:min-h-[540px] md:grid-rows-2">
+						<div className="grid gap-0 bg-[var(--BC)] md:min-h-[540px] md:grid-rows-2">
 							{heroData.slides.slice(1).map((slide) => (
 								<div
 									key={slide.src}
@@ -81,20 +81,20 @@ export default function MainSections() {
 			</section>
 
 			<section className="mx-auto max-w-[1440px] px-4 py-10 lg:px-8 lg:py-14">
-				<div className="wrapper inline2 ringT overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_54px_rgba(34,24,10,0.08)]">
+				<div className="wrapper inline2 ringT overflow-hidden rounded-[2rem] bg-[var(--WH)]">
 					<div className="grid gap-10 px-6 py-10 md:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:px-14">
 						<article className="space-y-6">
-							<h1 className="max-w-[18ch] text-[clamp(2rem,4vw,3.5rem)] font-black leading-[1.12] tracking-tight text-[#111]">
+							<h1 className="max-w-[18ch] text-[clamp(2rem,4vw,3.5rem)] font-black leading-[1.12] tracking-tight text-[var(--BK)]">
 								代々木駅から徒歩3分、
 								<br />
 								文房具・事務用品のことなら
-								<span className="text-[#1bbda4]">正明堂へ</span>
+								<span className="text-[var(--MC)]">正明堂へ</span>
 							</h1>
-							<p className="max-w-2xl  leading-8 text-[#4b4339] md:text-[1.05rem]">
+							<p className="max-w-2xl  leading-8 text-[var(--GR)] md:text-[1.05rem]">
 								{heroData.introBody}
 							</p>
 						</article>
-						<figure className="relative min-h-[18rem] overflow-hidden rounded-[1.75rem] bg-[#eef6f3]">
+						<figure className="relative min-h-[18rem] overflow-hidden rounded-[1.75rem] bg-[var(--BC)]">
 							<Image
 								src="/images/home/001.jpg"
 								alt=""
@@ -116,15 +116,15 @@ export default function MainSections() {
 
 					<div className="grid items-end gap-6 md:grid-cols-[1fr_auto]">
 						<div className="space-y-3">
-							<h2 className="text-5xl font-black tracking-[0.08em] text-[#1bbda4]">
+							<h2 className="text-5xl font-black tracking-[0.08em] text-[var(--MC)]">
 								{productsData.label}
 							</h2>
-							<p className="max-w-3xl text-[1rem] leading-8 text-[#51483e] md:text-[1.05rem]">
+							<p className="max-w-3xl text-[1rem] leading-8 text-[var(--GR)] md:text-[1.05rem]">
 								{productsData.description}
 							</p>
 						</div>
 						<a
-							className="inline-flex items-center justify-center rounded-full bg-[#111] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5"
+							className="inline-flex items-center justify-center rounded-full bg-[var(--BK)] px-6 py-3 text-sm font-semibold text-[var(--WH)] transition hover:-translate-y-0.5"
 							href="#products"
 						>
 							取扱商品
@@ -144,11 +144,11 @@ export default function MainSections() {
 							id={card.id}
 							className={[
 								"relative overflow-hidden p-6 md:p-10",
-								index === 0 ? "bg-[#f5c86f]" : "bg-[#4b6fa3]",
+								index === 0 ? "bg-[var(--AC)]" : "bg-[var(--SC)]",
 							].join(" ")}
 						>
-							<div className="mx-auto max-w-[28rem] space-y-5 text-white">
-								<div className="relative mx-auto aspect-[4/3] w-full max-w-[420px] overflow-hidden rounded-[1.5rem] shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+							<div className="mx-auto max-w-[28rem] space-y-5 text-[var(--WH)]">
+								<div className="relative mx-auto aspect-[4/3] w-full max-w-[420px] overflow-hidden rounded-[1.5rem]">
 									<Image
 										src={card.image.src}
 										alt={card.image.alt}
@@ -167,8 +167,8 @@ export default function MainSections() {
 									className={[
 										"inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold transition hover:-translate-y-0.5",
 										index === 0
-											? "bg-white text-[#8a6b22]"
-											: "bg-white text-[#355a8d]",
+											? "bg-[var(--WH)] text-[var(--MC)]"
+											: "bg-[var(--WH)] text-[var(--SC)]",
 									].join(" ")}
 									href={card.cta.href}
 								>

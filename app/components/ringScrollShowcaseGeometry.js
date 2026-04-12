@@ -23,6 +23,8 @@ export const RING_ROTATION_OFFSET = -(Math.PI * HALF_RATIO);
 export const RING_VISIBLE_RATIO_FALLBACK = 1 - RING_HOLE_RADIUS_RATIO;
 export const TEST_SEGMENT_OPACITY = 0;
 export const WID_CSS_VAR = "--wid";
+export const MD_DOWN_MEDIA_QUERY = "(max-width: 767px)";
+export const VIDEO_RING_PATH_OUTER_RADIUS_MD_DOWN_SCALE = 1.25;
 
 // 角度とスクロールの単位を作るための定数。
 const FULL_TURN_MULTIPLIER = 2;
@@ -122,6 +124,11 @@ function drawSegmentBand(ctx, cx, cy, innerRadius, outerRadius, startAngle, endA
 export function readWidRatio(host) {
   const rawValue = window.getComputedStyle(host).getPropertyValue(WID_CSS_VAR);
   return normalizeRatio(rawValue, RING_VISIBLE_RATIO_FALLBACK);
+}
+
+export function getVideoRingPathOuterRadius(outerRadius, isMdDown) {
+  if (!isMdDown) return outerRadius;
+  return outerRadius * VIDEO_RING_PATH_OUTER_RADIUS_MD_DOWN_SCALE;
 }
 
 // いまのスクロール位置を、現在のセクション総数に対する進行度へ変換する。

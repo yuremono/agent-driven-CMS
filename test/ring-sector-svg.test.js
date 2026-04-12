@@ -6,6 +6,7 @@ import {
   getOpeningRingCenter,
   getRingSectorSvgPathD,
   getRingSectorSvgPathDs,
+  getVideoRingPathOuterRadius,
   getViewportRingSectorSvgPathDs,
   TAU,
 } from "../app/components/ringScrollShowcaseGeometry.js";
@@ -45,6 +46,11 @@ test("getMediaReadyPercent clamps into a safe percentage", () => {
   assert.equal(getMediaReadyPercent(4, 4), 100);
   assert.equal(getMediaReadyPercent(10, 4), 100);
   assert.equal(getMediaReadyPercent(1, 0), 0);
+});
+
+test("getVideoRingPathOuterRadius scales only the SVG path outer radius below md", () => {
+  assert.equal(getVideoRingPathOuterRadius(100, false), 100);
+  assert.equal(getVideoRingPathOuterRadius(100, true), 125);
 });
 
 test("getOpeningRingCenter moves from viewport center to left edge center", () => {

@@ -15,6 +15,8 @@ import {
   clampUnit,
   getOpeningRingCenter,
   getRingSectorSvgPathD,
+  getVideoRingPathOuterRadius,
+  MD_DOWN_MEDIA_QUERY,
   TAU,
 } from "./ringScrollShowcaseGeometry.js";
 import {
@@ -161,6 +163,10 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
     if (!geom) return;
 
     const { innerRadius, outerRadius, rotation, segmentCount } = geom;
+    const pathOuterRadius = getVideoRingPathOuterRadius(
+      outerRadius,
+      window.matchMedia?.(MD_DOWN_MEDIA_QUERY).matches ?? false,
+    );
     const span = TAU / segmentCount;
     const ringCenter = getCurrentRingCenter();
     const currentPhase = openingPhaseRef.current;
@@ -172,7 +178,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
 
     const effectiveOuter =
       innerRadius +
-      Math.max(0, outerRadius - innerRadius) * easeOutCubic(revealT);
+      Math.max(0, pathOuterRadius - innerRadius) * easeOutCubic(revealT);
 
     for (let i = 0; i < segmentCount; i += 1) {
       const startAngle = rotation + i * span;
@@ -191,7 +197,7 @@ const VideoRingOverlay = forwardRef(function VideoRingOverlay(
         ringCenter.cx,
         ringCenter.cy,
         innerRadius,
-        outerRadius,
+        pathOuterRadius,
         startAngle,
         endAngle,
       );

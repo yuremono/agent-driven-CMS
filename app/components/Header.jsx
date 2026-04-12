@@ -1,32 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const logo = {
   src: "/images/home/logo.png",
   alt: "Agent Driven CMS Demo",
+  eyebrow: "わ",
+  name: "Agent Driven CMS Demo",
 };
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/services", label: "Services" },
-];
-
-const demoItems = [
-  { href: "/services", label: "Service Outline" },
-  { href: "/admin", label: "Bridge Console" },
+  { href: "https://cms0505.vercel.app/", label: "Works" },
+  { href: "https://github.com/yuremono/BurnYourOwnStyle/tree/react", label: "BYOS" },
+  { href: "https://chat-kanban.vercel.app/", label: "ChatCanban" },
 ];
 
 const actionItems = [
   {
-    href: "/services",
-    label: "Service Guide",
+    href: "https://github.com/yuremono/creative-demos",
+    label: "CreativeDemos",
     className:
-      "inline-flex min-h-11 items-center justify-center rounded-full  px-4  tracking-[0.08em] transition hover:bg-[--BC]",
+      "inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC] transition hover:text-[--SC]",
   },
   {
-    href: "/admin",
-    label: "Open Admin",
+    href: "https://yuremono.github.io/BurnYourOwnStyle/rects",
+    label: "RandomRects",
     className:
-      "inline-flex min-h-11 items-center justify-center rounded-full bg-[--MC] px-5  tracking-[0.08em] text-[--WH] transition hover:bg-[--SC]",
+      "inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC] transition hover:text-[--SC]",
   },
 ];
 
@@ -47,43 +48,18 @@ function BrandLockup() {
 
 function DesktopNav() {
   return (
-    <nav className="HeaderNav hidden  lg:flex text-white font-bold pointer-events-auto" aria-label="main navigation">
-      <ul className="HeaderUl flex flex-wrap items-center justify-center gap-2   px-3 py-2">
+    <nav className="HeaderNav hidden md:flex pointer-events-auto" aria-label="main navigation">
+      <ul className="HeaderUl flex flex-wrap items-center justify-center gap-1 px-3 py-2">
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex rounded-full px-4 py-2  tracking-[0.12em] transition hover:bg-[--WH] hover:text-[--SC]"
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC]  hover:text-[--SC]"
             >
               {item.label}
             </Link>
           </li>
         ))}
-        <li>
-          <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2  tracking-[0.12em] transition hover:bg-[--WH] hover:text-[--SC] [&::-webkit-details-marker]:hidden">
-              Demos
-              <span className=" transition group-open:rotate-180">v</span>
-            </summary>
-            <div
-              className="absolute right-0 top-full z-30 mt-3 min-w-[13rem] rounded-[24px] border border-[--TC] bg-[--WH] p-2"
-              
-            >
-              <ul className="grid gap-1">
-                {demoItems.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block rounded-full px-4 py-3  tracking-[0.12em] transition hover:bg-[--BC] hover:text-[--MC]"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </details>
-        </li>
       </ul>
     </nav>
   );
@@ -91,7 +67,7 @@ function DesktopNav() {
 
 function HeaderActions() {
   return (
-    <div className="HeaderItems hidden  lg:grid  pointer-events-auto text-white font-bold">
+    <div className="HeaderItems hidden md:flex items-center gap-1 pointer-events-auto">
       {actionItems.map((item) => (
         <Link key={item.href} href={item.href} className={item.className}>
           {item.label}
@@ -102,54 +78,112 @@ function HeaderActions() {
 }
 
 function MobileMenu() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mobileMenu") === "open") {
+      setOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.documentElement.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <details className="relative ml-auto lg:hidden">
-      <summary className="flex size-12 cursor-pointer list-none items-center justify-center rounded-full border border-[--TC] bg-[--BC] [&::-webkit-details-marker]:hidden">
-        <span className="sr-only">メニューを開く</span>
-        <span className="flex flex-col gap-[5px]">
-          <span className="block h-0.5 w-5 rounded-full bg-[--MC]" />
-          <span className="block h-0.5 w-5 rounded-full bg-[--MC]" />
-          <span className="block h-0.5 w-5 rounded-full bg-[--MC]" />
-        </span>
-      </summary>
+    <div className="fixed top-[var(--PX)]  right-[var(--PX)] ml-auto md:hidden pointer-events-auto">
+      <button
+        type="button"
+        className={`HeaderMenu dots inline-flex items-center  transition-opacity  ${
+          open ? "active " : ""
+        }`}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        aria-expanded={open}
+        aria-controls="mobile-header-drawer"
+        aria-label={open ? "メニューを閉じる" : "メニューを開く"}
+      >
+          <span className="span1 " />
+          <span className="span2 " />
+          <span className="span3 " />
+      </button>
 
       <div
-        className="absolute right-0 top-full mt-3 w-[min(22rem,calc(100vw-1.5rem))] rounded-[24px] border border-[--TC] bg-[--WH]"
-
+        className={`fixed inset-0 z-50 transition-opacity  ease-out ${
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden={!open}
       >
-        <div className="border-b border-[--TC] px-4 py-4">
-          <p className="uppercase text-[--SC]">
-            {logo.eyebrow}
-          </p>
-          <p className='mt-2  text-[1.35rem]  text-[--TC]'>
-            {logo.name}
-          </p>
-        </div>
+        <button
+          type="button"
+          className="absolute inset-0 bg-[--WH]"
+          onClick={() => setOpen(false)}
+          tabIndex={-1}
+          aria-label="メニューを閉じる"
+        />
 
-        <nav aria-label="mobile navigation" className="px-3 py-3">
-          <ul className="grid gap-1">
-            {[...navItems, { href: "/admin", label: "Admin" }].map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="block rounded-full px-4 py-3   transition hover:bg-[--BC] hover:text-[--MC]"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div
+          id="mobile-header-drawer"
+          className={`bg-white relative flex h-full w-full flex-col bg-[--WH] transition-[opacity,transform]  ease-out ${
+            open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+          }`}
+        >
 
-        <div className="grid gap-2 border-t border-[--TC] px-4 py-4">
-          {actionItems.map((item) => (
-            <Link key={item.href} href={item.href} className={item.className}>
-              {item.label}
-            </Link>
-          ))}
+          <nav aria-label="mobile navigation" className="mt-16 flex-1 overflow-y-auto px-[var(--PX)] pb-6 text-white text-right">
+            <ul className="">
+                <li className="">
+                  <Link
+                    href="/"
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    onClick={() => setOpen(false)}
+                  >
+             HOME
+                  </Link>
+                </li>
+              {navItems.map((item) => (
+                <li key={item.href} className="">
+                  <Link
+                    href={item.href}
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              {actionItems.map((item) => (
+                <li key={item.href} className="">
+                  <Link
+                    href={item.href}
+                    className="block px-1 py-4 text-lg font-medium tracking-tight text-[--TC]"
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
-    </details>
+    </div>
   );
 }
 
