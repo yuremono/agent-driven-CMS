@@ -1,6 +1,16 @@
 # Agent Driven CMS
 
-Codex app-server を既定で使い、起動時切替で Claude Code も併用できるローカル向け CMS テンプレートです。
+Codex app-server または Claude Code を Next.js の Node runtime 経由で中継し、ブラウザ UI から自然言語でサイト編集を行うローカル CMS 。
+
+## 概要
+
+ポートフォリオ及びPoCとして開発したものです。
+
+- 動機：AI時代にクライアントが求めるのは「チャットで編集できるwebサイト」でありCMS自体がボトルネック
+- 手段：パブリックでなくローカル完結ならモデル性能依存を解消できる
+- 成果：フロントエンド以外は全て仕様駆動で実現。エンタメ性もある
+- 考察：
+リテラシーの高いクライアント＆十分な初期サポートという条件は必須と考えていたし、体験としては有意義であるが、ここまでやるならCursorエディタを使ってもらった方がいい。という結論です。
 
 ## デモ動画
 
@@ -13,12 +23,12 @@ npm install
 npm run dev
 ```
 
-## GitHub Pages 公開プレビュー
+## GitHub Pages プレビュー
 
-- `npm run build:pages` で、`dist/github-pages` に公開用の静的サイトを生成します。
-- `.github/workflows/pages.yml` が `main` への push と手動実行でこの生成物を GitHub Pages に配信します。
-- 公開プレビューは静的サイトなので、`/admin` の bridge 機能はローカル開発時のみ使えます。
-- 公開先では `/` と `/services/` の見た目を確認できます。
+ローカル限定のため静的ページです。
+
+
+
 
 ### Provider 切替
 

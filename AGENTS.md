@@ -14,18 +14,24 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 | コマンド | 用途 |
 |---------|------|
 | `npm run dev` | 開発サーバー起動 |
+| `npm run dev:codex` | Codex provider で開発サーバー起動 |
+| `npm run dev:claude` | Claude provider で開発サーバー起動 |
 | `npm run build` | プロダクションビルド |
+| `npm run build:pages` | GitHub Pages 用ビルド |
 | `npm run start` | ビルド後の起動 |
 | `npm test` | ユニットテスト実行 |
 | `npm run smoke` | app-server の疎通確認 |
+| `npm run smoke:claude` | Claude Code の疎通確認 |
 
 ## 主要ディレクトリ・ファイル
 
 | パス | 役割 |
 |-----|------|
-| [`app/page.jsx`](app/page.jsx) | ブラウザ UI のメイン画面 |
+| [`app/page.tsx`](app/page.tsx) | 公開側ホーム画面。Header と RingScrollShowcase を組み合わせる |
 | [`app/api/bridge/`](app/api/bridge/) | bridge 用 API Route |
-| [`lib/codex-bridge.js`](lib/codex-bridge.js) | Codex app-server の起動・接続・状態管理 |
+| [`lib/bridge.ts`](lib/bridge.ts) | bridge の共通型と provider 切り替え |
+| [`lib/codex-bridge.ts`](lib/codex-bridge.ts) | Codex app-server の起動・接続・状態管理 |
+| [`lib/claude-bridge.ts`](lib/claude-bridge.ts) | Claude Code の起動・接続・状態管理 |
 | [`docs/`](docs/) | bridge / 認証 / app-server の補足ドキュメント |
 | [`test/`](test/) | `node:test` の回帰テスト |
 | [`smoke-test.js`](smoke-test.js) | 最小の app-server 疎通テスト |
@@ -45,14 +51,14 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 
 ## Execution rules
 
-- あなたが実行した行動をユーザーに**誤った行動**だと指摘されたら、論理的に分析して `tasks/learning.yaml` に追記する
+- あなたが実行した行動をユーザーに**誤った行動**だと指摘されたら、論理的に意図を読み取って `tasks/learning.yaml` に追記する
 - 部分的な修正は、周囲のコードを書き換えないように `apply_patch` のような差分ツールで最小差分を修正する。
 - `app/api/*` は `runtime = "nodejs"` を維持し、app-server との接続はサーバー側で扱う。
 - UI は既存の状態表示・承認フローを壊さずに拡張する。
 - 初めて編集するファイルは、編集前に必ず内容を確認する。
 - `docs/vision.md` は重要ファイルとして扱い、必要に応じて更新する。
 - `tasks` ,`tmp` ディレクトリを github に push しない
-- black,white以外の全ての色は`app/globals.css`の`oklch`で書かれた既存変数を使用する。透明度もWH50などで指定可能。グラデーションとシャドウは使用しない。見つけたらユーザーに報告する。
+- black,white以外の全ての色は`app/globals.scss`の`oklch`で書かれた既存変数を使用する。透明度もWH50などで指定可能。グラデーションとシャドウは使用しない。見つけたらユーザーに報告する。
 
 ## ブラウザ確認
 
@@ -63,4 +69,3 @@ Codex app-server または Claude Code を Next.js の Node runtime 経由で中
 
 - `git reset --hard` や `git checkout --` のような破壊的操作を勝手に使わない。
 - 認証情報やシークレットをrepoやブラウザへ渡さない。
-
