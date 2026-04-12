@@ -3,18 +3,14 @@ import Link from "next/link";
 const logo = {
   src: "/images/home/logo.png",
   alt: "Agent Driven CMS Demo",
-  eyebrow: "Agent Driven CMS",
-  name: "Site Editor",
 };
 
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
-  { href: "/shomeido", label: "Showcase" },
 ];
 
 const demoItems = [
-  { href: "/shomeido", label: "Shomeido Demo" },
   { href: "/services", label: "Service Outline" },
   { href: "/admin", label: "Bridge Console" },
 ];
@@ -24,33 +20,26 @@ const actionItems = [
     href: "/services",
     label: "Service Guide",
     className:
-      "inline-flex min-h-11 items-center justify-center rounded-full border border-[--TC] px-4 text-sm tracking-[0.08em] text-[--TC] transition hover:bg-[--BC]",
+      "inline-flex min-h-11 items-center justify-center rounded-full  px-4  tracking-[0.08em] transition hover:bg-[--BC]",
   },
   {
     href: "/admin",
     label: "Open Admin",
     className:
-      "inline-flex min-h-11 items-center justify-center rounded-full bg-[--MC] px-5 text-sm tracking-[0.08em] text-[--WH] transition hover:bg-[--SC]",
+      "inline-flex min-h-11 items-center justify-center rounded-full bg-[--MC] px-5  tracking-[0.08em] text-[--WH] transition hover:bg-[--SC]",
   },
 ];
 
 function BrandLockup() {
   return (
-    <Link href="/" className="absolute top-1/2 left-0 translate-y-[-50%] pointer-events-auto" aria-label="Agent Driven CMS ホーム">
-      <span className="">
+    <Link href="/" className="HeaderLogo absolute w-[var(--logoW)] top-1/2 left-0 translate-y-[-50%] pointer-events-auto" aria-label="Agent Driven CMS ホーム">
+      <span className="HeaderLogoText ">
+              わ
         {/* <img
           src={logo.src}
           alt={logo.alt}
           className="block h-auto w-[110px] sm:w-[132px] lg:w-[164px]"
         /> */}
-        <span className="">
-          <span className="block">
-            {logo.eyebrow}
-          </span>
-          <span className='block'>
-            {logo.name}
-          </span>
-        </span>
       </span>
     </Link>
   );
@@ -58,13 +47,13 @@ function BrandLockup() {
 
 function DesktopNav() {
   return (
-    <nav className="hidden  lg:flex bg-white pointer-events-auto" aria-label="main navigation">
-      <ul className="flex flex-wrap items-center justify-center gap-2   px-3 py-2">
+    <nav className="HeaderNav hidden  lg:flex text-white font-bold pointer-events-auto" aria-label="main navigation">
+      <ul className="HeaderUl flex flex-wrap items-center justify-center gap-2   px-3 py-2">
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex rounded-full px-4 py-2 text-sm tracking-[0.12em] text-[--TC] transition hover:bg-[--WH] hover:text-[--SC]"
+              className="inline-flex rounded-full px-4 py-2  tracking-[0.12em] transition hover:bg-[--WH] hover:text-[--SC]"
             >
               {item.label}
             </Link>
@@ -72,23 +61,20 @@ function DesktopNav() {
         ))}
         <li>
           <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2 text-sm tracking-[0.12em] text-[--TC] transition hover:bg-[--WH] hover:text-[--SC] [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2  tracking-[0.12em] transition hover:bg-[--WH] hover:text-[--SC] [&::-webkit-details-marker]:hidden">
               Demos
-              <span className="text-[0.7rem] transition group-open:rotate-180">v</span>
+              <span className=" transition group-open:rotate-180">v</span>
             </summary>
             <div
               className="absolute right-0 top-full z-30 mt-3 min-w-[13rem] rounded-[24px] border border-[--TC] bg-[--WH] p-2"
-              style={{
-                boxShadow:
-                  "0 20px 48px color-mix(in srgb, var(--BK) 14%, transparent)",
-              }}
+              
             >
               <ul className="grid gap-1">
                 {demoItems.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="block rounded-full px-4 py-3 text-[0.82rem] tracking-[0.12em] text-[--TC] transition hover:bg-[--BC] hover:text-[--MC]"
+                      className="block rounded-full px-4 py-3  tracking-[0.12em] transition hover:bg-[--BC] hover:text-[--MC]"
                     >
                       {item.label}
                     </Link>
@@ -105,7 +91,7 @@ function DesktopNav() {
 
 function HeaderActions() {
   return (
-    <div className="hidden  lg:flex bg-white pointer-events-auto">
+    <div className="HeaderItems hidden  lg:grid  pointer-events-auto text-white font-bold">
       {actionItems.map((item) => (
         <Link key={item.href} href={item.href} className={item.className}>
           {item.label}
@@ -118,7 +104,7 @@ function HeaderActions() {
 function MobileMenu() {
   return (
     <details className="relative ml-auto lg:hidden">
-      <summary className="flex size-12 cursor-pointer list-none items-center justify-center rounded-full border border-[--TC] bg-[--BC] text-[--TC] [&::-webkit-details-marker]:hidden">
+      <summary className="flex size-12 cursor-pointer list-none items-center justify-center rounded-full border border-[--TC] bg-[--BC] [&::-webkit-details-marker]:hidden">
         <span className="sr-only">メニューを開く</span>
         <span className="flex flex-col gap-[5px]">
           <span className="block h-0.5 w-5 rounded-full bg-[--MC]" />
@@ -129,15 +115,13 @@ function MobileMenu() {
 
       <div
         className="absolute right-0 top-full mt-3 w-[min(22rem,calc(100vw-1.5rem))] rounded-[24px] border border-[--TC] bg-[--WH]"
-        style={{
-          boxShadow: "0 20px 48px color-mix(in srgb, var(--BK) 14%, transparent)",
-        }}
+
       >
         <div className="border-b border-[--TC] px-4 py-4">
-          <p className="text-[0.65rem] uppercase tracking-[0.28em] text-[--SC]">
+          <p className="uppercase text-[--SC]">
             {logo.eyebrow}
           </p>
-          <p className='mt-2 font-["Iowan_Old_Style","Palatino_Linotype","Book_Antiqua",Georgia,serif] text-[1.35rem] tracking-[-0.04em] text-[--TC]'>
+          <p className='mt-2  text-[1.35rem]  text-[--TC]'>
             {logo.name}
           </p>
         </div>
@@ -148,7 +132,7 @@ function MobileMenu() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="block rounded-full px-4 py-3 text-[0.82rem] tracking-[0.14em] text-[--TC] transition hover:bg-[--BC] hover:text-[--MC]"
+                  className="block rounded-full px-4 py-3   transition hover:bg-[--BC] hover:text-[--MC]"
                 >
                   {item.label}
                 </Link>
@@ -171,7 +155,7 @@ function MobileMenu() {
 
 export default function Header() {
 	return (
-		<header className="fixed top-0 z-40 w-full h-full pointer-events-none">
+		<header className="Header fixed top-0 z-40 w-full h-full pointer-events-none">
 				<div className="flex flex-col items-end justify-between h-full">
 					<BrandLockup />
 					<DesktopNav />

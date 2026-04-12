@@ -31,6 +31,7 @@
   --gap: clamp(1rem, 2vw, 1.5rem);
   --gapH: calc(var(--gap) / 2);
   --wid: 85%;
+  --logoW: calc(100% - var(--wid));
   --MY: clamp(4rem, 7vw, 6rem);
   --PX: clamp(1.25rem, 2.5vw, 2rem);
   --h1: 64px;
@@ -46,6 +47,43 @@
   --FW: 400;
   --FZ: clamp(14px,1.4vw,16px);
 }
+.HeaderLogo{
+        font-size: 8vw;
+        background: url(/images/home/clip01.png) repeat center/20vw;
+        filter: grayscale(50%);
+        // border: 10px solid transparent; /* 1. 枠線の幅を確保 */
+        // border-left-width: 0;
+        border-radius: 0 999px 999px 0;
+        overflow: hidden;
+        border: 10px solid var(--TR);
+        border-left: 0;
+        // padding: 1rem;
+        // padding-left: 0;
+        aspect-ratio: 1/2;
+        // border-image-source: url(/images/home/clip01.png); /* 2. 画像のパス */
+        // border-image-slice: 30; /* 3. 画像の分割位置（必要に応じて調整） */
+        // border-image-repeat: round; /* 4. 画像の繰り返し方（stretch/repeat/round） */
+        // border-image-repeat: stretch; /* 4. 画像の繰り返し方（stretch/repeat/round） */
+}
+.HeaderLogoText{
+        display: block;
+        height: 100%;
+        align-content: center;
+        background-color: #fff;
+        color: var(--BK70);
+        // border: 1rem solid transparent; /* 1. 枠線の幅を確保 */
+}
+.Header{
+        li,
+        a:not(.HeaderLogo){
+                font-size: 1.5rem;
+                color: var(--WH);
+                -webkit-text-stroke: .25em var(--BK);
+                paint-order:stroke;
+                // border: 1rem solid transparent; /* 1. 枠線の幅を確保 */
+        }
+} 
+
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
 :root {//font
         --Ser: "Shippori Mincho","Noto Serif JP", serif;
@@ -258,7 +296,7 @@
           flex-direction: column;
           justify-content: flex-end;
           gap: 0.75rem;
-          z-index: 30;
+          z-index: 100;
         }
         
         .editorTranscriptRail:not(:empty) {
