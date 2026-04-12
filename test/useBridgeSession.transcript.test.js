@@ -57,9 +57,11 @@ test("delta followed by completed keeps the final assistant text", () => {
   });
 
   const assistant = latestAssistant(conversation);
-  assert.equal(conversation.length, 1);
+  assert.equal(conversation.length, 2);
   assert.equal(assistant?.text, "Hello world!");
   assert.equal(assistant?.status, "complete");
+  assert.equal(conversation[0].status, "streaming");
+  assert.equal(conversation[1].status, "complete");
 });
 
 test("completed first wins over later deltas for the same turn", () => {
@@ -104,7 +106,7 @@ test("replayed completed events do not create stale duplicate assistant text", (
   });
 
   const assistant = latestAssistant(conversation);
-  assert.equal(conversation.length, 1);
+  assert.equal(conversation.length, 2);
   assert.equal(assistant?.text, "First half plus end");
   assert.equal(assistant?.status, "complete");
 });
@@ -135,9 +137,11 @@ test("pending assistant placeholder accepts deltas and completion", () => {
   });
 
   const assistant = latestAssistant(conversation);
-  assert.equal(conversation.length, 1);
+  assert.equal(conversation.length, 2);
   assert.equal(assistant?.text, "streamed text");
   assert.equal(assistant?.status, "complete");
+  assert.equal(conversation[0].status, "streaming");
+  assert.equal(conversation[1].status, "complete");
 });
 
 test("restored runtime keeps completed turn guard after reload", () => {
@@ -160,7 +164,7 @@ test("restored runtime keeps completed turn guard after reload", () => {
   });
 
   const assistant = latestAssistant(conversation);
-  assert.equal(conversation.length, 1);
+  assert.equal(conversation.length, 2);
   assert.equal(assistant?.text, "Already done");
   assert.equal(assistant?.status, "complete");
 });

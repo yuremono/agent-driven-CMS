@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 import { useEffect } from "react";
 import CanvasEffectLayer from "./CanvasEffectLayer";
@@ -34,6 +35,9 @@ function syncEffectText(root = document) {
 }
 
 export default function RootClientShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const showDevBridge = process.env.NODE_ENV === "development" && pathname !== "/admin";
+
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
 
@@ -71,7 +75,7 @@ export default function RootClientShell({ children }: { children: ReactNode }) {
       <EffectWarpDefs />
       <CanvasEffectLayer />
       {children}
-      {process.env.NODE_ENV === "development" ? <DevBridgeLayer /> : null}
+      {showDevBridge ? <DevBridgeLayer /> : null}
     </>
   );
 }

@@ -479,6 +479,10 @@ export function completeAssistantMessage(
     text?: string;
   } = {},
 ) {
+  if (turnId != null && runtime.completedTurnIds.has(turnId)) {
+    return conversation;
+  }
+
   const entryId = resolveAssistantEntryId(runtime, conversation, turnId, itemId);
   if (turnId != null) {
     runtime.completedTurnIds.add(turnId);
@@ -495,12 +499,14 @@ export function completeAssistantMessage(
     return nextConversation;
   }
 
-  const nextConversation = updateEntryById(conversation, entryId, (entry) => ({
-    ...entry,
-    text: text || entry.text || "",
-    status: "complete",
-  }));
-  trackAssistantEntry(runtime, entryId, turnId, itemId);
+  const previousEntry = conversation.find((entry) => entry.id === entryId) ?? null;
+  const finalText = text || previousEntry?.text || "";
+  const assistantId = runtime.nextId++;
+  const nextConversation = [
+    ...conversation,
+    createTranscriptEntry(assistantId, "assistant", finalText, "complete"),
+  ];
+  trackAssistantEntry(runtime, assistantId, turnId, itemId);
   if (runtime.pendingAssistantId === entryId) {
     runtime.pendingAssistantId = null;
   }
@@ -508,34 +514,22 @@ export function completeAssistantMessage(
 }
 
 export function useBridgeSession() {
-  const persistedSessionRef = useRef<PersistedBridgeSession | null | undefined>(undefined);
-  if (persistedSessionRef.current === undefined) {
-    persistedSessionRef.current = readPersistedBridgeSession();
-  }
-  const persistedSession = persistedSessionRef.current;
-  const persistedThreadIdRef = useRef(persistedSession?.threadId ?? null);
   const [status, setStatus] = useState(emptyStatus);
-  const [input, setInput] = useState(persistedSession?.input ?? "");
-  const [selectedModel, setSelectedModel] = useState(
-    persistedSession?.selectedModel ?? emptyStatus.defaultModel,
-  );
+  const [input, setInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState(emptyStatus.defaultModel);
   const [sending, setSending] = useState(false);
   const [events, setEvents] = useState<LocalEvent[]>([]);
-  const [conversation, setConversation] = useState<TranscriptEntry[]>(
-    persistedSession?.conversation ?? [],
-  );
-  const [currentTurnId, setCurrentTurnId] = useState<RuntimeKey | null>(
-    persistedSession?.currentTurnId ?? null,
-  );
+  const [conversation, setConversation] = useState<TranscriptEntry[]>([]);
+  const [currentTurnId, setCurrentTurnId] = useState<RuntimeKey | null>(null);
   const [turnDiff, setTurnDiff] = useState("");
   const [turnPlan, setTurnPlan] = useState<TurnPlan>(null);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [respondingRequestId, setRespondingRequestId] = useState<string | number | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [rateLimitsBusy, setRateLimitsBusy] = useState(false);
-  const transcriptRuntimeRef = useRef(
-    restoreTranscriptRuntime(persistedSession?.runtime, persistedSession?.conversation ?? []),
-  );
+  const [hydratedSession, setHydratedSession] = useState(false);
+  const transcriptRuntimeRef = useRef(createTranscriptRuntime());
+  const persistedThreadIdRef = useRef<string | null>(null);
   const [authRoutes, setAuthRoutes] = useState({
     account: false,
     login: false,
@@ -713,6 +707,22 @@ export function useBridgeSession() {
   }, []);
 
   useEffect(() => {
+    const persistedSession = readPersistedBridgeSession();
+    if (persistedSession) {
+      setInput(persistedSession.input);
+      setSelectedModel(persistedSession.selectedModel);
+      setConversation(persistedSession.conversation);
+      setCurrentTurnId(persistedSession.currentTurnId);
+      transcriptRuntimeRef.current = restoreTranscriptRuntime(
+        persistedSession.runtime,
+        persistedSession.conversation,
+      );
+      persistedThreadIdRef.current = persistedSession.threadId;
+    }
+    setHydratedSession(true);
+  }, []);
+
+  useEffect(() => {
     if (!status.threadId) return;
 
     if (
@@ -730,6 +740,8 @@ export function useBridgeSession() {
   }, [status.threadId]);
 
   useEffect(() => {
+    if (!hydratedSession) return;
+
     writePersistedBridgeSession({
       version: 1,
       threadId: persistedThreadIdRef.current ?? status.threadId ?? null,
@@ -739,7 +751,14 @@ export function useBridgeSession() {
       conversation: conversation.slice(-MAX_PERSISTED_TRANSCRIPT_ENTRIES),
       runtime: serializeTranscriptRuntime(transcriptRuntimeRef.current),
     });
-  }, [conversation, currentTurnId, input, selectedModel, status.threadId]);
+  }, [
+    conversation,
+    currentTurnId,
+    hydratedSession,
+    input,
+    selectedModel,
+    status.threadId,
+  ]);
 
   const provider = status.provider ?? "codex";
   const providerLabel = status.providerLabel ?? (provider === "claude" ? "Claude Code" : "Codex");

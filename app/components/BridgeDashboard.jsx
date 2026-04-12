@@ -63,7 +63,7 @@ export default function BridgeDashboard() {
     providerLabel,
     rateLimitSummary,
     rateLimitsBusy,
-    replyText,
+    transcript,
     respondingRequestId,
     selectedModel,
     setInput,
@@ -356,15 +356,42 @@ export default function BridgeDashboard() {
 				<article className={panelClass}>
 					<PanelHeader
 						title="Agent Reply"
-						description="直近の応答をそのまま追えます。"
+						description="途中経過と最終応答を順に残します。"
 					/>
 					<div className="mt-4 grid gap-3 rounded-[22px] bg-[var(--WH70)] p-4 ring-1 ring-[var(--TC10)]">
 						<p className={`m-0 text-sm ${mutedClass}`}>
 							turn: {currentTurnId ?? "none"}
 						</p>
-						<div className="whitespace-pre-wrap rounded-2xl bg-[var(--WH)] px-4 py-3 leading-7 text-[var(--TC)] ring-1 ring-[var(--TC10)]">
-							{replyText || "まだ回答はありません。"}
-						</div>
+						{transcript.length > 0 ? (
+							<div className="grid gap-3">
+								{transcript.map((item) => (
+									<article
+										key={item.id}
+										className="grid gap-2 rounded-2xl bg-[var(--WH)] px-4 py-3 ring-1 ring-[var(--TC10)]"
+									>
+										<div className="flex flex-wrap items-center gap-2 text-sm">
+											<strong className="text-[var(--TC)]">
+												{item.role === "user"
+													? "user"
+													: "assistant"}
+											</strong>
+											<span
+												className={`text-[var(--GR)]`}
+											>
+												{item.status}
+											</span>
+										</div>
+										<p className="m-0 whitespace-pre-wrap leading-7 text-[var(--TC)]">
+											{item.text || "…"}
+										</p>
+									</article>
+								))}
+							</div>
+						) : (
+							<div className="rounded-2xl bg-[var(--WH)] px-4 py-3 leading-7 text-[var(--TC)] ring-1 ring-[var(--TC10)]">
+								まだ回答はありません。
+							</div>
+						)}
 					</div>
 				</article>
 
