@@ -1,5 +1,5 @@
-import { getBridge } from "../../../../lib/bridge.js";
-import { jsonError } from "../../../../lib/bridge-http.js";
+import { getBridge } from "../../../../lib/bridge";
+import { jsonError } from "../../../../lib/bridge-http";
 
 export const runtime = "nodejs";
 

@@ -1,9 +1,9 @@
-import { getBridge } from "../../../../lib/bridge.js";
-import { jsonError } from "../../../../lib/bridge-http.js";
+import { getBridge } from "../../../../lib/bridge";
+import { jsonError } from "../../../../lib/bridge-http";
 
 export const runtime = "nodejs";
 
-export async function GET(request) {
+export async function GET(request: Request) {
   const bridge = getBridge();
   const url = new URL(request.url);
   const refreshToken = url.searchParams.get("refreshToken") === "true";

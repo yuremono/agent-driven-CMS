@@ -1,5 +1,23 @@
 import { spawn } from "node:child_process";
+import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { EventEmitter } from "node:events";
+import type {
+  BridgeAuthMode,
+  BridgeSnapshot,
+  BridgeState,
+  BridgeStatus,
+  BridgeSubmitOptions,
+} from "./bridge";
+
+declare global {
+  var __agentDrivenCmsBridge: CodexBridge | undefined;
+}
+
+type PendingClientRequest = {
+  method?: string;
+  resolve: (value: unknown) => void;
+  reject: (error: Error) => void;
+};
 
 const DEFAULT_CODEX_MODEL = "gpt-5.4-mini";
 const CODEX_MODELS = [
@@ -33,6 +51,25 @@ function normalizeAuthMode(accountType) {
 }
 
 class CodexBridge extends EventEmitter {
+  proc: ChildProcessWithoutNullStreams | null;
+  initialized: boolean;
+  ready: boolean;
+  threadId: string | null;
+  pid: number | null;
+  state: BridgeState;
+  error: string | null;
+  nextId: number;
+  pending: Map<number, PendingClientRequest>;
+  pendingServerRequests: Map<string | number, unknown>;
+  starting: Promise<this> | null;
+  latestDiff: string;
+  latestPlan: unknown;
+  authMode: BridgeAuthMode;
+  account: Record<string, unknown> | null;
+  requiresOpenaiAuth: boolean | null;
+  threadStartRequested: boolean;
+  latestRateLimits: unknown;
+
   constructor() {
     super();
     this.proc = null;
@@ -57,7 +94,7 @@ class CodexBridge extends EventEmitter {
     this.latestRateLimits = null;
   }
 
-  getStatus() {
+  getStatus(): BridgeStatus {
     return {
       provider: "codex",
       providerLabel: "Codex",
@@ -71,8 +108,8 @@ class CodexBridge extends EventEmitter {
       error: this.error,
       pendingServerRequests: this.pendingServerRequests.size,
       authMode: this.authMode,
-      accountType: this.account?.type ?? null,
-      accountEmail: this.account?.email ?? null,
+      accountType: typeof this.account?.type === "string" ? this.account.type : null,
+      accountEmail: typeof this.account?.email === "string" ? this.account.email : null,
       requiresOpenaiAuth: this.requiresOpenaiAuth,
       rateLimits: this.latestRateLimits,
       initialized: this.initialized,
@@ -80,7 +117,7 @@ class CodexBridge extends EventEmitter {
     };
   }
 
-  snapshot() {
+  snapshot(): BridgeSnapshot {
     return {
       type: "status",
       status: this.getStatus(),
@@ -217,6 +254,7 @@ class CodexBridge extends EventEmitter {
     if (!message.method && message.id != null && this.pending.has(message.id)) {
       const pending = this.pending.get(message.id);
       this.pending.delete(message.id);
+      if (!pending) return;
       if (message.error) {
         pending.reject(new Error(message.error.message ?? "codex error"));
       } else {
@@ -358,7 +396,7 @@ class CodexBridge extends EventEmitter {
       throw new Error(this.error);
     }
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const onEvent = (event) => {
         if (event.type === "status" && event.status.threadId) {
           cleanup();
@@ -391,7 +429,7 @@ class CodexBridge extends EventEmitter {
     await this.start();
     if (this.initialized) return this;
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const onEvent = (event) => {
         if (event.type === "status" && event.status.initialized) {
           cleanup();
@@ -419,7 +457,7 @@ class CodexBridge extends EventEmitter {
     return this;
   }
 
-  async submitPrompt(text, { model } = {}) {
+  async submitPrompt(text: string, { model }: BridgeSubmitOptions = {}) {
     await this.waitForReady();
     const id = this.nextId++;
     const selectedModel = typeof model === "string" && model && model !== "auto" ? model : null;
@@ -438,7 +476,7 @@ class CodexBridge extends EventEmitter {
     });
   }
 
-  async respondToServerRequest(requestId, result) {
+  async respondToServerRequest(requestId: string | number, result: unknown) {
     await this.waitForReady();
     if (requestId == null) {
       throw new Error("requestId is required");

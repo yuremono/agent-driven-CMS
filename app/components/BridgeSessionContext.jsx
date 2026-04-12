@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from "react";
 
-import { useBridgeSession } from "./useBridgeSession.js";
+import { useBridgeSession } from "./useBridgeSession";
 
 const BridgeSessionContext = createContext(null);
 

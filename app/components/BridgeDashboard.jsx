@@ -6,7 +6,7 @@ import {
   formatResetAt,
   formatWindow,
   requestTitle,
-} from "./useBridgeSession.js";
+} from "./useBridgeSession";
 import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
 
 const shellClass = "shell adminShell mx-auto grid min-h-screen max-w-[1180px] gap-6";

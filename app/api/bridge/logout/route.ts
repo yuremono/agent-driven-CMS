@@ -1,9 +1,9 @@
-import { getBridge } from "../../../../lib/bridge.js";
-import { jsonError, sameOriginForbidden } from "../../../../lib/bridge-http.js";
+import { getBridge } from "../../../../lib/bridge";
+import { jsonError, sameOriginForbidden } from "../../../../lib/bridge-http";
 
 export const runtime = "nodejs";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const forbidden = sameOriginForbidden(request);
   if (forbidden) return forbidden;
 

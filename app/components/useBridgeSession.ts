@@ -1,9 +1,55 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchJson } from "../../lib/bridge-http.js";
+import type { FormEvent } from "react";
+import type { BridgeStatus } from "../../lib/bridge";
+import { fetchJson } from "../../lib/bridge-http";
 
-const emptyStatus = {
+type TranscriptRole = "assistant" | "user";
+type TranscriptStatus = "complete" | "error" | "streaming";
+type TranscriptEntry = {
+  id: number;
+  role: TranscriptRole;
+  text: string;
+  status: TranscriptStatus;
+};
+type TranscriptRuntime = {
+  nextId: number;
+  pendingAssistantId: number | null;
+  assistantIdByTurnId: Map<string | number, number>;
+  assistantIdByItemId: Map<string | number, number>;
+  completedTurnIds: Set<string | number>;
+};
+type ApprovalRequest = {
+  requestId: string | number;
+  method: string;
+  params?: Record<string, unknown>;
+};
+type LocalEvent = Record<string, unknown>;
+type RateLimitSummary = {
+  label: string;
+  usedPercent: number;
+  windowDurationMins: number;
+  resetsAt: number;
+};
+type TurnPlan = {
+  plan?: unknown[];
+} | null;
+type BridgeEventPayload = Record<string, unknown> & {
+  id?: string | number;
+  type?: string;
+  method?: string;
+  status?: BridgeStatus;
+  diff?: string;
+  plan?: unknown;
+  params?: Record<string, unknown>;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+const emptyStatus: BridgeStatus = {
   provider: "codex",
   providerLabel: "Codex",
   capabilities: {
@@ -26,9 +72,17 @@ const emptyStatus = {
   threadId: null,
   pid: null,
   error: null,
+  pendingServerRequests: 0,
+  authMode: null,
+  accountType: null,
+  accountEmail: null,
+  requiresOpenaiAuth: null,
+  rateLimits: null,
+  initialized: false,
+  ready: false,
 };
 
-function upsertByRequestId(list, request) {
+function upsertByRequestId(list: ApprovalRequest[], request: ApprovalRequest) {
   const index = list.findIndex((item) => item.requestId === request.requestId);
   if (index === -1) return [request, ...list];
   const next = list.slice();
@@ -36,35 +90,40 @@ function upsertByRequestId(list, request) {
   return next;
 }
 
-function removeByRequestId(list, requestId) {
+function removeByRequestId(list: ApprovalRequest[], requestId: string | number) {
   return list.filter((item) => item.requestId !== requestId);
 }
 
-function getErrorMessage(error, fallbackMessage) {
+function getErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
 }
 
-function getRateLimitSummary(rateLimits) {
-  if (!rateLimits?.primary) return null;
+function getRateLimitSummary(rateLimits: unknown): RateLimitSummary | null {
+  if (!isRecord(rateLimits) || !isRecord(rateLimits.primary)) return null;
+  const primary = rateLimits.primary;
   return {
-    label: rateLimits.limitName ?? rateLimits.limitId ?? "codex",
-    usedPercent: rateLimits.primary.usedPercent,
-    windowDurationMins: rateLimits.primary.windowDurationMins,
-    resetsAt: rateLimits.primary.resetsAt,
+    label:
+      (typeof rateLimits.limitName === "string" ? rateLimits.limitName : null) ??
+      (typeof rateLimits.limitId === "string" ? rateLimits.limitId : null) ??
+      "codex",
+    usedPercent: typeof primary.usedPercent === "number" ? primary.usedPercent : 0,
+    windowDurationMins:
+      typeof primary.windowDurationMins === "number" ? primary.windowDurationMins : 0,
+    resetsAt: typeof primary.resetsAt === "number" ? primary.resetsAt : 0,
   };
 }
 
-export function formatPercent(value) {
+export function formatPercent(value: unknown) {
   if (typeof value !== "number" || Number.isNaN(value)) return "n/a";
   return `${Math.round(value)}%`;
 }
 
-export function formatWindow(minutes) {
+export function formatWindow(minutes: unknown) {
   if (typeof minutes !== "number" || Number.isNaN(minutes)) return "unknown";
   return `${minutes}分`;
 }
 
-export function formatResetAt(timestamp) {
+export function formatResetAt(timestamp: unknown) {
   if (typeof timestamp !== "number" || Number.isNaN(timestamp)) return "unknown";
   return new Intl.DateTimeFormat("ja-JP", {
     hour: "2-digit",
@@ -72,14 +131,14 @@ export function formatResetAt(timestamp) {
   }).format(new Date(timestamp * 1000));
 }
 
-export function requestTitle(method) {
+export function requestTitle(method: string | null | undefined) {
   if (method === "item/fileChange/requestApproval") return "File change approval";
   if (method === "item/commandExecution/requestApproval") return "Command approval";
   if (method === "tool/requestUserInput") return "Tool input";
   return method ?? "request";
 }
 
-export function decisionOptions(method) {
+export function decisionOptions(method: string | null | undefined) {
   if (method === "item/fileChange/requestApproval") {
     return ["accept", "acceptForSession", "decline", "cancel"];
   }
@@ -89,11 +148,16 @@ export function decisionOptions(method) {
   return [];
 }
 
-function createTranscriptEntry(id, role, text, status) {
+function createTranscriptEntry(
+  id: number,
+  role: TranscriptRole,
+  text: string,
+  status: TranscriptStatus,
+): TranscriptEntry {
   return { id, role, text, status };
 }
 
-export function createTranscriptRuntime() {
+export function createTranscriptRuntime(): TranscriptRuntime {
   return {
     nextId: 1,
     pendingAssistantId: null,
@@ -103,7 +167,11 @@ export function createTranscriptRuntime() {
   };
 }
 
-function updateEntryById(list, entryId, updater) {
+function updateEntryById(
+  list: TranscriptEntry[],
+  entryId: number,
+  updater: (entry: TranscriptEntry) => TranscriptEntry,
+) {
   const index = list.findIndex((item) => item.id === entryId);
   if (index === -1) return list;
   const next = list.slice();
@@ -111,7 +179,7 @@ function updateEntryById(list, entryId, updater) {
   return next;
 }
 
-function getLatestAssistantText(entries) {
+function getLatestAssistantText(entries: TranscriptEntry[]) {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const item = entries[index];
     if (item.role === "assistant") {
@@ -121,18 +189,22 @@ function getLatestAssistantText(entries) {
   return "";
 }
 
-function findLatestAssistantEntry(list, excludeComplete = false) {
+function findLatestAssistantEntry(list: TranscriptEntry[], excludeComplete = false) {
   for (let index = list.length - 1; index >= 0; index -= 1) {
     const item = list[index];
     if (item.role !== "assistant") continue;
     if (item.status !== "streaming") continue;
-    if (excludeComplete && item.status === "complete") continue;
     return item;
   }
   return null;
 }
 
-function resolveAssistantEntryId(runtime, conversation, turnId, itemId) {
+function resolveAssistantEntryId(
+  runtime: TranscriptRuntime,
+  conversation: TranscriptEntry[],
+  turnId: string | number | null,
+  itemId: string | number | null,
+) {
   if (itemId != null && runtime.assistantIdByItemId.has(itemId)) {
     return runtime.assistantIdByItemId.get(itemId);
   }
@@ -145,7 +217,12 @@ function resolveAssistantEntryId(runtime, conversation, turnId, itemId) {
   return findLatestAssistantEntry(conversation, true)?.id ?? null;
 }
 
-function trackAssistantEntry(runtime, entryId, turnId, itemId) {
+function trackAssistantEntry(
+  runtime: TranscriptRuntime,
+  entryId: number,
+  turnId: string | number | null,
+  itemId: string | number | null,
+) {
   if (turnId != null) {
     runtime.assistantIdByTurnId.set(turnId, entryId);
   }
@@ -154,7 +231,15 @@ function trackAssistantEntry(runtime, entryId, turnId, itemId) {
   }
 }
 
-export function beginAssistantMessage(conversation, runtime, { turnId = null, itemId = null, text = "" } = {}) {
+export function beginAssistantMessage(
+  conversation: TranscriptEntry[],
+  runtime: TranscriptRuntime,
+  { turnId = null, itemId = null, text = "" }: {
+    turnId?: string | number | null;
+    itemId?: string | number | null;
+    text?: string;
+  } = {},
+) {
   if (turnId != null && runtime.completedTurnIds.has(turnId)) {
     return conversation;
   }
@@ -179,7 +264,15 @@ export function beginAssistantMessage(conversation, runtime, { turnId = null, it
   return nextConversation;
 }
 
-export function applyAssistantDelta(conversation, runtime, { turnId = null, itemId = null, delta = "" } = {}) {
+export function applyAssistantDelta(
+  conversation: TranscriptEntry[],
+  runtime: TranscriptRuntime,
+  { turnId = null, itemId = null, delta = "" }: {
+    turnId?: string | number | null;
+    itemId?: string | number | null;
+    delta?: string;
+  } = {},
+) {
   if (!delta) return conversation;
   if (turnId != null && runtime.completedTurnIds.has(turnId)) {
     return conversation;
@@ -205,7 +298,15 @@ export function applyAssistantDelta(conversation, runtime, { turnId = null, item
   return nextConversation;
 }
 
-export function completeAssistantMessage(conversation, runtime, { turnId = null, itemId = null, text = "" } = {}) {
+export function completeAssistantMessage(
+  conversation: TranscriptEntry[],
+  runtime: TranscriptRuntime,
+  { turnId = null, itemId = null, text = "" }: {
+    turnId?: string | number | null;
+    itemId?: string | number | null;
+    text?: string;
+  } = {},
+) {
   const entryId = resolveAssistantEntryId(runtime, conversation, turnId, itemId);
   if (turnId != null) {
     runtime.completedTurnIds.add(turnId);
@@ -239,13 +340,13 @@ export function useBridgeSession() {
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(emptyStatus.defaultModel);
   const [sending, setSending] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [conversation, setConversation] = useState([]);
-  const [currentTurnId, setCurrentTurnId] = useState(null);
+  const [events, setEvents] = useState<LocalEvent[]>([]);
+  const [conversation, setConversation] = useState<TranscriptEntry[]>([]);
+  const [currentTurnId, setCurrentTurnId] = useState<string | number | null>(null);
   const [turnDiff, setTurnDiff] = useState("");
-  const [turnPlan, setTurnPlan] = useState(null);
-  const [approvals, setApprovals] = useState([]);
-  const [respondingRequestId, setRespondingRequestId] = useState(null);
+  const [turnPlan, setTurnPlan] = useState<TurnPlan>(null);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [respondingRequestId, setRespondingRequestId] = useState<string | number | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [rateLimitsBusy, setRateLimitsBusy] = useState(false);
   const transcriptRuntimeRef = useRef(createTranscriptRuntime());
@@ -255,7 +356,7 @@ export function useBridgeSession() {
     logout: false,
   });
 
-  function pushLocalError(error, fallbackMessage) {
+  function pushLocalError(error: unknown, fallbackMessage: string) {
     setEvents((current) => [
       {
         type: "local-error",
@@ -268,13 +369,13 @@ export function useBridgeSession() {
   useEffect(() => {
     let mounted = true;
 
-    fetchJson("/api/bridge/status")
+    fetchJson<BridgeStatus>("/api/bridge/status")
       .then((data) => {
         if (mounted) setStatus(data);
       })
       .catch(() => {});
 
-    const probe = async (path) => {
+    const probe = async (path: string) => {
       try {
         const res = await fetch(path, { method: "OPTIONS" });
         return res.status !== 404;
@@ -294,22 +395,26 @@ export function useBridgeSession() {
 
     const source = new EventSource("/api/bridge/events");
     source.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+      const payload = JSON.parse(event.data) as BridgeEventPayload;
       setEvents((current) => [payload, ...current].slice(0, 80));
 
       if (payload.type === "status") {
-        setStatus(payload.status);
+        if (payload.status) {
+          setStatus(payload.status);
+        }
         if (typeof payload.diff === "string") {
           setTurnDiff(payload.diff);
         }
         if (payload.plan) {
-          setTurnPlan(payload.plan);
+          setTurnPlan(isRecord(payload.plan) ? payload.plan : null);
         }
         return;
       }
 
       if (payload.method === "turn/started") {
-        setCurrentTurnId(payload.params?.turn?.id ?? null);
+        const turn = isRecord(payload.params?.turn) ? payload.params.turn : null;
+        const turnId = typeof turn?.id === "string" || typeof turn?.id === "number" ? turn.id : null;
+        setCurrentTurnId(turnId);
         setTurnDiff("");
         setTurnPlan(null);
         setApprovals([]);
@@ -317,7 +422,7 @@ export function useBridgeSession() {
       }
 
       if (payload.method === "turn/diff/updated") {
-        setTurnDiff(payload.params?.diff ?? "");
+        setTurnDiff(typeof payload.params?.diff === "string" ? payload.params.diff : "");
         return;
       }
 
@@ -327,14 +432,19 @@ export function useBridgeSession() {
       }
 
       if (payload.method === "item/started") {
-        const item = payload.params?.item;
+        const item = isRecord(payload.params?.item) ? payload.params.item : null;
         if (item?.type === "agentMessage") {
-          setCurrentTurnId(payload.params?.turnId ?? null);
+          const turnId =
+            typeof payload.params?.turnId === "string" || typeof payload.params?.turnId === "number"
+              ? payload.params.turnId
+              : null;
+          const itemId = typeof item.id === "string" || typeof item.id === "number" ? item.id : null;
+          setCurrentTurnId(turnId);
           setConversation((current) =>
             beginAssistantMessage(current, transcriptRuntimeRef.current, {
-              turnId: payload.params?.turnId ?? null,
-              itemId: item?.id ?? null,
-              text: item?.text ?? "",
+              turnId,
+              itemId,
+              text: typeof item.text === "string" ? item.text : "",
             }),
           );
         }
@@ -347,11 +457,11 @@ export function useBridgeSession() {
         payload.method === "tool/requestUserInput"
       ) {
         const requestId = payload.id ?? payload.params?.itemId ?? payload.params?.requestId;
-        if (requestId != null) {
+        if (typeof requestId === "string" || typeof requestId === "number") {
           setApprovals((current) =>
             upsertByRequestId(current, {
               requestId,
-              method: payload.method,
+              method: payload.method ?? "request",
               params: payload.params ?? {},
             }),
           );
@@ -361,19 +471,30 @@ export function useBridgeSession() {
 
       if (payload.method === "serverRequest/resolved") {
         const requestId = payload.params?.requestId;
-        if (requestId != null) {
+        if (typeof requestId === "string" || typeof requestId === "number") {
           setApprovals((current) => removeByRequestId(current, requestId));
         }
         return;
       }
 
       if (payload.method === "item/agentMessage/delta") {
-        const delta = payload.params?.delta ?? "";
+        const delta = typeof payload.params?.delta === "string" ? payload.params.delta : "";
         if (!delta) return;
+        const item = isRecord(payload.params?.item) ? payload.params.item : null;
+        const itemId =
+          typeof payload.params?.itemId === "string" || typeof payload.params?.itemId === "number"
+            ? payload.params.itemId
+            : typeof item?.id === "string" || typeof item?.id === "number"
+              ? item.id
+              : null;
+        const turnId =
+          typeof payload.params?.turnId === "string" || typeof payload.params?.turnId === "number"
+            ? payload.params.turnId
+            : null;
         setConversation((current) =>
           applyAssistantDelta(current, transcriptRuntimeRef.current, {
-            turnId: payload.params?.turnId ?? null,
-            itemId: payload.params?.itemId ?? payload.params?.item?.id ?? null,
+            turnId,
+            itemId,
             delta,
           }),
         );
@@ -381,13 +502,18 @@ export function useBridgeSession() {
       }
 
       if (payload.method === "item/completed") {
-        const item = payload.params?.item;
+        const item = isRecord(payload.params?.item) ? payload.params.item : null;
         if (item?.type === "agentMessage") {
+          const turnId =
+            typeof payload.params?.turnId === "string" || typeof payload.params?.turnId === "number"
+              ? payload.params.turnId
+              : null;
+          const itemId = typeof item.id === "string" || typeof item.id === "number" ? item.id : null;
           setConversation((current) =>
             completeAssistantMessage(current, transcriptRuntimeRef.current, {
-              turnId: payload.params?.turnId ?? null,
-              itemId: item?.id ?? null,
-              text: item.text ?? "",
+              turnId,
+              itemId,
+              text: typeof item.text === "string" ? item.text : "",
             }),
           );
         }
@@ -472,11 +598,11 @@ export function useBridgeSession() {
       };
 
   async function refreshStatus() {
-    const data = await fetchJson("/api/bridge/status");
+    const data = await fetchJson<BridgeStatus>("/api/bridge/status");
     setStatus(data);
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = input.trim();
     if (!value || sending) return;
@@ -525,7 +651,7 @@ export function useBridgeSession() {
     }
   }
 
-  async function handleApproval(request, decision) {
+  async function handleApproval(request: ApprovalRequest, decision: string) {
     setRespondingRequestId(request.requestId);
     try {
       await fetchJson("/api/bridge/respond", {
@@ -547,7 +673,7 @@ export function useBridgeSession() {
     if (!authRoutes.login || !supportsBrowserLogin || authBusy) return;
     setAuthBusy(true);
     try {
-      const data = await fetchJson("/api/bridge/login", {
+      const data = await fetchJson<{ authUrl?: string }>("/api/bridge/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "chatgpt" }),

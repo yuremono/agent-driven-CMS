@@ -2,6 +2,41 @@ import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import readline from "node:readline";
+import type {
+  BridgeAuthMode,
+  BridgeCapabilities,
+  BridgeModelOption,
+  BridgeSnapshot,
+  BridgeState,
+  BridgeStatus,
+  BridgeSubmitOptions,
+} from "./bridge";
+
+declare global {
+  var __agentDrivenCmsClaudeBridge: ClaudeBridge | undefined;
+}
+
+type ClaudeAuthStatus = Record<string, unknown> | null;
+type ClaudeActiveTurn = {
+  turnId: string;
+  assistantStarted: boolean;
+  assistantText: string;
+  completed: boolean;
+};
+type ClaudeBridgeOptions = {
+  spawnProcess?: typeof spawn;
+  execFileJson?: (command: string, args: string[]) => Promise<unknown>;
+  generateId?: () => string;
+};
+type ClaudeRunTurnOptions = {
+  turnId: string;
+  text: string;
+  model?: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
 
 const CLAUDE_MODELS = [
   { label: "Auto", value: "auto" },
@@ -26,7 +61,13 @@ function buildAssistantItem(text) {
   };
 }
 
-function getClaudeArgs({ permissionMode, sessionId, isResume, model, text }) {
+function getClaudeArgs({ permissionMode, sessionId, isResume, model, text }: {
+  permissionMode: string;
+  sessionId: string;
+  isResume: boolean;
+  model?: string | null;
+  text: string;
+}) {
   const args = [
     "-p",
     "--output-format",
@@ -59,7 +100,7 @@ function parseJsonLine(line) {
   }
 }
 
-function normalizeClaudeAuthMode(authStatus) {
+function normalizeClaudeAuthMode(authStatus: ClaudeAuthStatus) {
   if (!authStatus?.loggedIn) return null;
 
   if (typeof authStatus.authMethod === "string" && authStatus.authMethod) {
@@ -82,7 +123,26 @@ function extractAssistantText(message) {
 }
 
 class ClaudeBridge extends EventEmitter {
-  constructor(options = {}) {
+  initialized: boolean;
+  ready: boolean;
+  threadId: string | null;
+  pid: number | null;
+  state: BridgeState;
+  error: string | null;
+  starting: Promise<this> | null;
+  authMode: BridgeAuthMode;
+  account: Record<string, unknown> | null;
+  latestAuthStatus: unknown;
+  activeTurn: ClaudeActiveTurn | null;
+  hasStartedConversation: boolean;
+  defaultPermissionMode: string;
+  availableModels: BridgeModelOption[];
+  capabilities: BridgeCapabilities;
+  spawnProcess: typeof spawn;
+  execFileJson: (command: string, args: string[]) => Promise<unknown>;
+  generateId: () => string;
+
+  constructor(options: ClaudeBridgeOptions = {}) {
     super();
     this.initialized = false;
     this.ready = false;
@@ -104,7 +164,7 @@ class ClaudeBridge extends EventEmitter {
     this.generateId = options.generateId ?? randomUUID;
   }
 
-  getStatus() {
+  getStatus(): BridgeStatus {
     return {
       provider: "claude",
       providerLabel: "Claude Code",
@@ -118,8 +178,8 @@ class ClaudeBridge extends EventEmitter {
       error: this.error,
       pendingServerRequests: 0,
       authMode: this.authMode,
-      accountType: this.account?.type ?? null,
-      accountEmail: this.account?.email ?? null,
+      accountType: typeof this.account?.type === "string" ? this.account.type : null,
+      accountEmail: typeof this.account?.email === "string" ? this.account.email : null,
       requiresOpenaiAuth: null,
       rateLimits: null,
       initialized: this.initialized,
@@ -127,7 +187,7 @@ class ClaudeBridge extends EventEmitter {
     };
   }
 
-  snapshot() {
+  snapshot(): BridgeSnapshot {
     return {
       type: "status",
       status: this.getStatus(),
@@ -136,7 +196,7 @@ class ClaudeBridge extends EventEmitter {
     };
   }
 
-  async defaultExecFileJson(command, args) {
+  async defaultExecFileJson(command: string, args: string[]) {
     return await new Promise((resolve, reject) => {
       execFile(command, args, { encoding: "utf8", maxBuffer: 1024 * 1024 }, (error, stdout) => {
         if (error) {
@@ -160,14 +220,14 @@ class ClaudeBridge extends EventEmitter {
     return this.threadId;
   }
 
-  applyAuthStatus(authStatus) {
+  applyAuthStatus(authStatus: ClaudeAuthStatus) {
     this.latestAuthStatus = authStatus ?? null;
     this.initialized = true;
     this.authMode = normalizeClaudeAuthMode(authStatus);
     this.account = authStatus?.loggedIn
       ? {
-          type: authStatus.authMethod ?? "authenticated",
-          provider: authStatus.apiProvider ?? null,
+          type: typeof authStatus.authMethod === "string" ? authStatus.authMethod : "authenticated",
+          provider: typeof authStatus.apiProvider === "string" ? authStatus.apiProvider : null,
         }
       : null;
 
@@ -187,7 +247,7 @@ class ClaudeBridge extends EventEmitter {
 
   async refreshAuthStatus() {
     const result = await this.execFileJson("claude", ["auth", "status", "--json"]);
-    this.applyAuthStatus(result);
+    this.applyAuthStatus(isRecord(result) ? result : null);
     this.emit("event", this.snapshot());
     return result;
   }
@@ -270,7 +330,7 @@ class ClaudeBridge extends EventEmitter {
     });
   }
 
-  emitTurnCompleted(turnId, status, error = null) {
+  emitTurnCompleted(turnId: string, status: string, error: string | null = null) {
     this.emit("event", {
       method: "turn/completed",
       params: {
@@ -328,7 +388,7 @@ class ClaudeBridge extends EventEmitter {
     }
   }
 
-  async runTurn({ turnId, text, model }) {
+  async runTurn({ turnId, text, model }: ClaudeRunTurnOptions) {
     const sessionId = this.ensureThreadId();
     const args = getClaudeArgs({
       permissionMode: this.defaultPermissionMode,
@@ -352,10 +412,10 @@ class ClaudeBridge extends EventEmitter {
       crlfDelay: Infinity,
     });
 
-    let resultEvent = null;
+    let resultEvent: Record<string, unknown> | null = null;
     let stderr = "";
     let resolved = false;
-    const exitPromise = new Promise((resolve) => {
+    const exitPromise = new Promise<number>((resolve) => {
       proc.on("exit", (code) => resolve(code ?? 0));
     });
 
@@ -414,7 +474,7 @@ class ClaudeBridge extends EventEmitter {
     this.state = this.ready ? "ready" : "error";
     if (resultError) {
       this.error = null;
-      this.emitTurnCompleted(turnId, "failed", resultError);
+      this.emitTurnCompleted(turnId, "failed", String(resultError));
     } else {
       this.error = null;
       this.emitTurnCompleted(turnId, "completed");
@@ -422,7 +482,7 @@ class ClaudeBridge extends EventEmitter {
     this.emit("event", this.snapshot());
   }
 
-  async submitPrompt(text, { model } = {}) {
+  async submitPrompt(text: string, { model }: BridgeSubmitOptions = {}) {
     await this.waitForReady();
 
     if (this.activeTurn) {

@@ -1,16 +1,16 @@
-import { getBridge } from "../../../../lib/bridge.js";
+import { getBridge } from "../../../../lib/bridge";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const bridge = getBridge();
-  await bridge.start().catch(() => {});
+  await Promise.resolve(bridge.start()).catch(() => {});
 
-  let cleanup = null;
+  let cleanup: (() => void) | null = null;
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
-      const push = (payload) => {
+      const push = (payload: unknown) => {
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify(payload)}\n\n`),
         );
@@ -18,10 +18,12 @@ export async function GET() {
 
       push(bridge.snapshot());
 
-      const listener = (event) => push(event);
+      const listener = (event: unknown) => push(event);
       bridge.on("event", listener);
 
-      cleanup = () => bridge.off("event", listener);
+      cleanup = () => {
+        bridge.off("event", listener);
+      };
     },
     cancel() {
       cleanup?.();

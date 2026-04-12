@@ -1,4 +1,4 @@
-import { getBridge } from "../../../../lib/bridge.js";
+import { getBridge } from "../../../../lib/bridge";
 
 export const runtime = "nodejs";
 

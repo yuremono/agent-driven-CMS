@@ -10,7 +10,7 @@
     "build": "next build",
     "build:pages": "node scripts/build-github-pages.mjs",
     "start": "next start",
-    "test": "node --test test/*.test.js",
+    "test": "node --import tsx --test test/*.test.js",
     "smoke": "node smoke-test.js",
     "smoke:codex": "node smoke-test.js",
     "smoke:claude": "node smoke-claude.js"
@@ -23,9 +23,14 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "sass": "^1.99.0",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
   }
 }
