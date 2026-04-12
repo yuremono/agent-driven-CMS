@@ -33,9 +33,17 @@ type ClaudeRunTurnOptions = {
   text: string;
   model?: string | null;
 };
+type AssistantItem = {
+  type: "agentMessage";
+  text: string;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function getString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
 }
 
 const CLAUDE_MODELS = [
@@ -54,7 +62,7 @@ const CLAUDE_CAPABILITIES = {
   rateLimits: false,
 };
 
-function buildAssistantItem(text) {
+function buildAssistantItem(text: string): AssistantItem {
   return {
     type: "agentMessage",
     text,
@@ -92,9 +100,10 @@ function getClaudeArgs({ permissionMode, sessionId, isResume, model, text }: {
   return args;
 }
 
-function parseJsonLine(line) {
+function parseJsonLine(line: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(line);
+    const parsed: unknown = JSON.parse(line);
+    return isRecord(parsed) ? parsed : null;
   } catch {
     return null;
   }
@@ -114,10 +123,12 @@ function normalizeClaudeAuthMode(authStatus: ClaudeAuthStatus) {
   return "authenticated";
 }
 
-function extractAssistantText(message) {
-  const content = Array.isArray(message?.content) ? message.content : [];
+function extractAssistantText(message: unknown): string {
+  const content = isRecord(message) && Array.isArray(message.content) ? message.content : [];
   return content
-    .filter((block) => block?.type === "text" && typeof block.text === "string")
+    .filter((block): block is { type: "text"; text: string } =>
+      isRecord(block) && block.type === "text" && typeof block.text === "string"
+    )
     .map((block) => block.text)
     .join("");
 }
@@ -292,7 +303,7 @@ class ClaudeBridge extends EventEmitter {
     throw new Error(this.error ?? "Claude Code is not ready");
   }
 
-  emitAssistantStarted(turnId) {
+  emitAssistantStarted(turnId: string) {
     if (this.activeTurn?.assistantStarted) return;
     if (this.activeTurn) {
       this.activeTurn.assistantStarted = true;
@@ -307,7 +318,7 @@ class ClaudeBridge extends EventEmitter {
     });
   }
 
-  emitAssistantDelta(turnId, delta) {
+  emitAssistantDelta(turnId: string, delta: string) {
     if (!delta) return;
     this.emitAssistantStarted(turnId);
     this.emit("event", {
@@ -319,7 +330,7 @@ class ClaudeBridge extends EventEmitter {
     });
   }
 
-  emitAssistantCompleted(turnId, text) {
+  emitAssistantCompleted(turnId: string, text: string) {
     this.emitAssistantStarted(turnId);
     this.emit("event", {
       method: "item/completed",
@@ -344,8 +355,8 @@ class ClaudeBridge extends EventEmitter {
     });
   }
 
-  handleClaudeEvent(event, turnId) {
-    if (!event || typeof event !== "object") return;
+  handleClaudeEvent(event: unknown, turnId: string) {
+    if (!isRecord(event)) return;
 
     if (event.type === "system" && event.subtype === "init" && typeof event.session_id === "string") {
       this.threadId = event.session_id;
@@ -353,7 +364,8 @@ class ClaudeBridge extends EventEmitter {
     }
 
     if (event.type === "stream_event") {
-      const delta = event.event?.delta;
+      const streamEvent = isRecord(event.event) ? event.event : null;
+      const delta = isRecord(streamEvent?.delta) ? streamEvent.delta : null;
       if (delta?.type === "text_delta" && typeof delta.text === "string") {
         if (this.activeTurn) {
           this.activeTurn.assistantText += delta.text;
@@ -459,7 +471,7 @@ class ClaudeBridge extends EventEmitter {
         : this.activeTurn?.assistantText ?? "";
     const resultError =
       resultEvent?.is_error || resultEvent?.subtype === "error"
-        ? ((resultEvent?.error ?? stderr.trim()) || "Claude Code failed")
+        ? (getString(resultEvent?.error) ?? (stderr.trim() || "Claude Code failed"))
         : exitCode === 0
           ? null
           : stderr.trim() || `Claude Code exited with code ${exitCode}`;

@@ -18,6 +18,13 @@ type PendingClientRequest = {
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
 };
+type CodexMessage = Record<string, unknown> & {
+  id?: number | null;
+  method?: string;
+  params?: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  error?: Record<string, unknown>;
+};
 
 const DEFAULT_CODEX_MODEL = "gpt-5.4-mini";
 const CODEX_MODELS = [
@@ -35,19 +42,36 @@ const CODEX_CAPABILITIES = {
   rateLimits: true,
 };
 
-function parseLine(line) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function asCodexMessage(value: unknown): CodexMessage | null {
+  return isRecord(value) ? (value as CodexMessage) : null;
+}
+
+function parseLine(line: string): CodexMessage | null {
   try {
-    return JSON.parse(line);
+    return asCodexMessage(JSON.parse(line));
   } catch {
     return null;
   }
 }
 
-function normalizeAuthMode(accountType) {
+function normalizeAuthMode(accountType: unknown): BridgeAuthMode {
   if (accountType === "apiKey" || accountType === "apikey") return "apikey";
   if (accountType === "chatgpt") return "chatgpt";
   if (accountType === "chatgptAuthTokens") return "chatgptAuthTokens";
   return null;
+}
+
+function getNestedRecord(parent: Record<string, unknown> | undefined, key: string): Record<string, unknown> | null {
+  const value = parent?.[key];
+  return isRecord(value) ? value : null;
+}
+
+function getString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
 }
 
 class CodexBridge extends EventEmitter {
@@ -126,9 +150,9 @@ class CodexBridge extends EventEmitter {
     };
   }
 
-  failPending(message) {
+  failPending(message: string | null) {
     for (const pending of this.pending.values()) {
-      pending.reject(new Error(message));
+      pending.reject(new Error(message ?? "codex app-server failed"));
     }
     this.pending.clear();
     this.pendingServerRequests.clear();
@@ -227,14 +251,14 @@ class CodexBridge extends EventEmitter {
     return this.starting;
   }
 
-  send(message) {
+  send(message: Record<string, unknown>) {
     if (!this.proc?.stdin.writable) {
       throw new Error("codex app-server is not running");
     }
     this.proc.stdin.write(`${JSON.stringify(message)}\n`);
   }
 
-  request(method, params) {
+  request(method: string, params: unknown) {
     const id = this.nextId--;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject, method });
@@ -242,21 +266,21 @@ class CodexBridge extends EventEmitter {
     });
   }
 
-  handleMessage(message) {
+  handleMessage(rawMessage: unknown) {
+    const message = asCodexMessage(rawMessage);
     if (!message) return;
     this.emit("event", message);
 
-    const isServerRequest = message.method && message.id != null;
-    if (isServerRequest) {
+    if (message.method && typeof message.id === "number") {
       this.pendingServerRequests.set(message.id, message);
     }
 
-    if (!message.method && message.id != null && this.pending.has(message.id)) {
+    if (!message.method && typeof message.id === "number" && this.pending.has(message.id)) {
       const pending = this.pending.get(message.id);
       this.pending.delete(message.id);
       if (!pending) return;
       if (message.error) {
-        pending.reject(new Error(message.error.message ?? "codex error"));
+        pending.reject(new Error(getString(message.error.message) ?? "codex error"));
       } else {
         // Side-effects based on the originating request method.
         this.applyClientResult(pending.method, message.result);
@@ -272,8 +296,9 @@ class CodexBridge extends EventEmitter {
     }
 
     if (message.method === "account/updated") {
-      if (Object.prototype.hasOwnProperty.call(message.params ?? {}, "authMode")) {
-        this.authMode = normalizeAuthMode(message.params.authMode ?? null);
+      const params = message.params ?? {};
+      if (Object.prototype.hasOwnProperty.call(params, "authMode")) {
+        this.authMode = normalizeAuthMode(params.authMode ?? null);
       }
 
       if (!this.authMode) {
@@ -311,7 +336,7 @@ class CodexBridge extends EventEmitter {
     }
 
     if (message.method === "turn/diff/updated") {
-      this.latestDiff = message.params?.diff ?? "";
+      this.latestDiff = getString(message.params?.diff) ?? "";
       this.emit("event", {
         type: "turn/diff/updated",
         threadId: message.params?.threadId ?? this.threadId,
@@ -339,15 +364,16 @@ class CodexBridge extends EventEmitter {
 
     if (message.method === "serverRequest/resolved") {
       const requestId = message.params?.requestId;
-      if (requestId != null) {
+      if (typeof requestId === "string" || typeof requestId === "number") {
         this.pendingServerRequests.delete(requestId);
       }
     }
   }
 
-  applyClientResult(method, result) {
+  applyClientResult(method: string | undefined, result: Record<string, unknown> | undefined) {
     if (method === "account/read") {
-      this.account = result?.account ? { ...result.account } : null;
+      const account = getNestedRecord(result, "account");
+      this.account = account ? { ...account } : null;
       this.authMode = normalizeAuthMode(this.account?.type ?? null);
       if (typeof result?.requiresOpenaiAuth === "boolean") {
         this.requiresOpenaiAuth = result.requiresOpenaiAuth;
@@ -371,8 +397,9 @@ class CodexBridge extends EventEmitter {
     }
 
     if (method === "thread/start") {
-      if (result?.thread?.id) {
-        this.threadId = result.thread.id;
+      const threadId = getString(getNestedRecord(result, "thread")?.id);
+      if (threadId) {
+        this.threadId = threadId;
         this.ready = true;
         this.state = "ready";
         this.emit("event", this.snapshot());
@@ -397,17 +424,20 @@ class CodexBridge extends EventEmitter {
     }
 
     await new Promise<void>((resolve, reject) => {
-      const onEvent = (event) => {
-        if (event.type === "status" && event.status.threadId) {
+      const onEvent = (event: unknown) => {
+        if (!isRecord(event)) return;
+        const status = isRecord(event.status) ? event.status : null;
+        if (event.type === "status" && status?.threadId) {
           cleanup();
           resolve();
         }
-        if (event.type === "status" && event.status.error && !event.status.threadId) {
+        if (event.type === "status" && status?.error && !status.threadId) {
           cleanup();
-          reject(new Error(event.status.error));
+          reject(new Error(String(status.error)));
         }
       };
-      const onExit = (event) => {
+      const onExit = (event: unknown) => {
+        if (!isRecord(event)) return;
         if (event.type === "process-exit") {
           cleanup();
           reject(new Error("codex app-server exited before becoming ready"));
@@ -430,17 +460,20 @@ class CodexBridge extends EventEmitter {
     if (this.initialized) return this;
 
     await new Promise<void>((resolve, reject) => {
-      const onEvent = (event) => {
-        if (event.type === "status" && event.status.initialized) {
+      const onEvent = (event: unknown) => {
+        if (!isRecord(event)) return;
+        const status = isRecord(event.status) ? event.status : null;
+        if (event.type === "status" && status?.initialized) {
           cleanup();
           resolve();
         }
-        if (event.type === "status" && event.status.error && !event.status.initialized) {
+        if (event.type === "status" && status?.error && !status.initialized) {
           cleanup();
-          reject(new Error(event.status.error));
+          reject(new Error(String(status.error)));
         }
       };
-      const onExit = (event) => {
+      const onExit = (event: unknown) => {
+        if (!isRecord(event)) return;
         if (event.type === "process-exit") {
           cleanup();
           reject(new Error("codex app-server exited before becoming initialized"));
