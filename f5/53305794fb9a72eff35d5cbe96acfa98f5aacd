@@ -1,0 +1,49 @@
+.github/workflows/pages.yml
+  a8899a771ccea753 29-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "f553305794fb9a72eff35d5cbe96acfa98f5aacd",
+  "prompts": {
+    "a8899a771ccea753": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d818d-6635-7411-abf6-b2393bf3f984",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "d128c60085356f1d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d810e-806c-7d40-9497-559ab9dc945f",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "e5173669fb1deaa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-1f6b-7873-a456-9ef50820d59b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2500,
+      "overriden_lines": 0
+    }
+  }
+}
