@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import RootClientShell from "./components/RootClientShell";
 
 export const metadata: Metadata = {
-  title: "A",
+  title: "Agent Driven CMS",
   description: "Local-first site editing with a development-only Codex overlay.",
 };
 
