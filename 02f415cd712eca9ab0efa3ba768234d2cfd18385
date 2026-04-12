@@ -1,0 +1,38 @@
+app/components/useBridgeSession.ts
+  d128c60085356f1d 10,20-22,39-54,69-70,73-80,113-255,511-516,518-521,524-529,536-538,715-742
+test/useBridgeSession.transcript.test.js
+  d128c60085356f1d 9-10,142-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "02f415cd712eca9ab0efa3ba768234d2cfd18385",
+  "prompts": {
+    "d128c60085356f1d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d810e-806c-7d40-9497-559ab9dc945f",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 279,
+      "total_deletions": 8,
+      "accepted_lines": 279,
+      "overriden_lines": 0
+    },
+    "e5173669fb1deaa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-1f6b-7873-a456-9ef50820d59b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2504,
+      "overriden_lines": 0
+    }
+  }
+}
