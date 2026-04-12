@@ -34,6 +34,7 @@ type RateLimitSummary = {
   resetsAt: number;
 };
 type TurnPlan = {
+  explanation?: string;
   plan?: unknown[];
 } | null;
 type PersistedTranscriptRuntime = {
@@ -799,7 +800,12 @@ export function useBridgeSession() {
     [status.rateLimits],
   );
 
-  const planSteps = Array.isArray(turnPlan?.plan) ? turnPlan.plan : [];
+  const planSteps = (
+    Array.isArray(turnPlan?.plan) ? turnPlan.plan : []
+  ) as Array<{
+    step?: string;
+    status?: string;
+  }>;
   const canSubmit = Boolean(status.threadId && !status.error && !sending);
   const submitLabel = sending
     ? "送信中..."

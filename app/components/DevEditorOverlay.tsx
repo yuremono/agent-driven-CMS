@@ -7,9 +7,18 @@ import {
 	PaperPlaneRight,
 	Plus,
 } from "@phosphor-icons/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+	type ChangeEvent,
+	type CSSProperties,
+	type RefObject,
+	type UIEvent,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 
-import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
+import { useBridgeSessionContext } from "./BridgeSessionContext";
 import {
 	cancelEveryOtherAnimationFrame,
 	requestEveryOtherAnimationFrame,
@@ -17,7 +26,20 @@ import {
 
 const imageExtensionPattern = /\.(?:apng|avif|gif|jpe?g|png|svg|webp)$/i;
 
-function TranscriptMessage({ item }) {
+type TranscriptItem = {
+	id: number;
+	role: "assistant" | "user";
+	text: string;
+	status: "complete" | "error" | "streaming";
+};
+
+type Attachment = {
+	id: string;
+	name: string;
+	previewUrl: string | null;
+};
+
+function TranscriptMessage({ item }: { item: TranscriptItem }) {
 	const isUser = item.role === "user";
 	const isError = item.status === "error";
 	const label = isUser ? "You" : isError ? "Error" : "Assistant";
@@ -43,7 +65,17 @@ function TranscriptMessage({ item }) {
 	);
 }
 
-function TranscriptLog({ style, transcript, viewportRef, onScroll }) {
+function TranscriptLog({
+	style,
+	transcript,
+	viewportRef,
+	onScroll,
+}: {
+	style: CSSProperties;
+	transcript: TranscriptItem[];
+	viewportRef: RefObject<HTMLElement | null>;
+	onScroll: (event: UIEvent<HTMLElement>) => void;
+}) {
 	if (transcript.length === 0) return null;
 
 	return (
@@ -81,13 +113,13 @@ export default function DevEditorOverlay() {
 		submitLabel,
 		transcript,
 	} = useBridgeSessionContext();
-	const fileInputRef = useRef(null);
-	const dockRef = useRef(null);
-	const textareaRef = useRef(null);
-	const transcriptViewportRef = useRef(null);
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	const dockRef = useRef<HTMLElement | null>(null);
+	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+	const transcriptViewportRef = useRef<HTMLElement | null>(null);
 	const stickToBottomRef = useRef(true);
-	const attachmentPreviewUrlsRef = useRef([]);
-	const [attachments, setAttachments] = useState([]);
+	const attachmentPreviewUrlsRef = useRef<string[]>([]);
+	const [attachments, setAttachments] = useState<Attachment[]>([]);
 	const [dockHeight, setDockHeight] = useState(0);
 	const [isComposerCollapsed, setIsComposerCollapsed] = useState(false);
 	const [isTranscriptCollapsed, setIsTranscriptCollapsed] = useState(false);
@@ -142,7 +174,7 @@ export default function DevEditorOverlay() {
 		fileInputRef.current?.click();
 	}
 
-	function handleAttachmentChange(event) {
+	function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
 		const files = Array.from(event.currentTarget.files ?? []);
 		for (const url of attachmentPreviewUrlsRef.current) {
 			URL.revokeObjectURL(url);
@@ -161,11 +193,11 @@ export default function DevEditorOverlay() {
 		});
 		attachmentPreviewUrlsRef.current = nextAttachments
 			.map((attachment) => attachment.previewUrl)
-			.filter(Boolean);
+			.filter((url): url is string => Boolean(url));
 		setAttachments(nextAttachments);
 	}
 
-	function handleAttachmentRemove(attachmentId) {
+	function handleAttachmentRemove(attachmentId: string) {
 		const nextAttachments = attachments.filter(
 			(attachment) => attachment.id !== attachmentId,
 		);
@@ -182,11 +214,11 @@ export default function DevEditorOverlay() {
 
 		attachmentPreviewUrlsRef.current = nextAttachments
 			.map((attachment) => attachment.previewUrl)
-			.filter(Boolean);
+			.filter((url): url is string => Boolean(url));
 		setAttachments(nextAttachments);
 	}
 
-	function handleTranscriptScroll(event) {
+	function handleTranscriptScroll(event: UIEvent<HTMLElement>) {
 		const node = event.currentTarget;
 		const distanceFromBottom =
 			node.scrollHeight - node.scrollTop - node.clientHeight;
@@ -205,8 +237,8 @@ export default function DevEditorOverlay() {
 	const transcriptToggleVisibilityClass = isComposerCollapsed
 		? "pointer-events-none opacity-0"
 		: "pointer-events-auto opacity-100";
-	const transcriptStyle = {
-		maxHeight: `calc(100dvh - 2rem) - ${dockHeight}px - 0.75rem)`,
+	const transcriptStyle: CSSProperties = {
+		maxHeight: `calc(100dvh - 2rem - ${dockHeight}px - 0.75rem)`,
 	};
 
 	return (

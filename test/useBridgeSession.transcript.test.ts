@@ -8,9 +8,16 @@ import {
   createTranscriptRuntime,
   restoreTranscriptRuntime,
   serializeTranscriptRuntime,
-} from "../app/components/useBridgeSession.js";
+} from "../app/components/useBridgeSession";
 
-function latestAssistant(conversation) {
+type TranscriptEntry = {
+  id: number;
+  role: "assistant" | "user";
+  text: string;
+  status: "complete" | "error" | "streaming";
+};
+
+function latestAssistant(conversation: TranscriptEntry[]) {
   for (let index = conversation.length - 1; index >= 0; index -= 1) {
     const entry = conversation[index];
     if (entry.role === "assistant") return entry;
@@ -20,7 +27,7 @@ function latestAssistant(conversation) {
 
 test("delta only accumulates streaming text on the same assistant entry", () => {
   const runtime = createTranscriptRuntime();
-  let conversation = [];
+  let conversation: TranscriptEntry[] = [];
 
   conversation = beginAssistantMessage(conversation, runtime, { turnId: "turn-1" });
   conversation = applyAssistantDelta(conversation, runtime, {
@@ -40,7 +47,7 @@ test("delta only accumulates streaming text on the same assistant entry", () => 
 
 test("delta followed by completed keeps the final assistant text", () => {
   const runtime = createTranscriptRuntime();
-  let conversation = [];
+  let conversation: TranscriptEntry[] = [];
 
   conversation = beginAssistantMessage(conversation, runtime, { turnId: "turn-2" });
   conversation = applyAssistantDelta(conversation, runtime, {
@@ -66,7 +73,7 @@ test("delta followed by completed keeps the final assistant text", () => {
 
 test("completed first wins over later deltas for the same turn", () => {
   const runtime = createTranscriptRuntime();
-  let conversation = [];
+  let conversation: TranscriptEntry[] = [];
 
   conversation = completeAssistantMessage(conversation, runtime, {
     turnId: "turn-3",
@@ -85,7 +92,7 @@ test("completed first wins over later deltas for the same turn", () => {
 
 test("replayed completed events do not create stale duplicate assistant text", () => {
   const runtime = createTranscriptRuntime();
-  let conversation = [];
+  let conversation: TranscriptEntry[] = [];
 
   conversation = beginAssistantMessage(conversation, runtime, { turnId: "turn-4" });
   conversation = applyAssistantDelta(conversation, runtime, {
@@ -114,7 +121,7 @@ test("replayed completed events do not create stale duplicate assistant text", (
 test("pending assistant placeholder accepts deltas and completion", () => {
   const runtime = createTranscriptRuntime();
   runtime.pendingAssistantId = runtime.nextId++;
-  let conversation = [
+  let conversation: TranscriptEntry[] = [
     {
       id: runtime.pendingAssistantId,
       role: "assistant",
@@ -146,7 +153,7 @@ test("pending assistant placeholder accepts deltas and completion", () => {
 
 test("restored runtime keeps completed turn guard after reload", () => {
   const runtime = createTranscriptRuntime();
-  let conversation = [];
+  let conversation: TranscriptEntry[] = [];
 
   conversation = beginAssistantMessage(conversation, runtime, { turnId: "turn-6" });
   conversation = completeAssistantMessage(conversation, runtime, {
@@ -172,8 +179,8 @@ test("restored runtime keeps completed turn guard after reload", () => {
 test("restored runtime keeps pending assistant placeholder after reload", () => {
   const runtime = createTranscriptRuntime();
   runtime.pendingAssistantId = runtime.nextId++;
-  const assistantId = runtime.pendingAssistantId;
-  let conversation = [
+  const assistantId = runtime.pendingAssistantId as number;
+  let conversation: TranscriptEntry[] = [
     {
       id: assistantId,
       role: "assistant",

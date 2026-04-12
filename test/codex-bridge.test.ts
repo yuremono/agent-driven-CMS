@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CodexBridge } from "../lib/codex-bridge.js";
+import { CodexBridge } from "../lib/codex-bridge";
 
 function createBridge() {
   const bridge = new CodexBridge();
-  const sent = [];
-  bridge.send = (message) => {
+  const sent: Array<{
+    id?: number;
+    method?: string;
+    params?: Record<string, unknown>;
+  }> = [];
+  bridge.send = (message: {
+    id?: number;
+    method?: string;
+    params?: Record<string, unknown>;
+  }) => {
     sent.push(message);
   };
   return { bridge, sent };

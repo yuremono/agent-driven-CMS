@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import {
   decisionOptions,
   formatPercent,
@@ -7,7 +9,7 @@ import {
   formatWindow,
   requestTitle,
 } from "./useBridgeSession";
-import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
+import { useBridgeSessionContext } from "./BridgeSessionContext";
 
 const shellClass = "shell adminShell mx-auto grid min-h-screen max-w-[1180px] gap-6";
 const heroClass =
@@ -26,7 +28,13 @@ const secondaryButtonClass =
 const primaryButtonClass =
   "inline-flex w-fit items-center justify-center rounded-full bg-[var(--MC)] px-5 py-3 text-sm font-medium text-[var(--WH)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-60";
 
-function PanelHeader({ title, description }) {
+function PanelHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="flex flex-col gap-1">
       <h2 className={`${titleClass} text-[1.35rem]`}>{title}</h2>
@@ -35,9 +43,21 @@ function PanelHeader({ title, description }) {
   );
 }
 
-function MetaChip({ children }) {
+function MetaChip({ children }: { children: ReactNode }) {
   return <span className={chipClass}>{children}</span>;
 }
+
+type ApprovalParams = {
+  reason?: string;
+  command?: string;
+  cwd?: string;
+  grantRoot?: string;
+  changes?: Array<{
+    path?: string;
+    kind?: string;
+    diff?: string;
+  }>;
+};
 
 export default function BridgeDashboard() {
   const {
@@ -465,7 +485,7 @@ export default function BridgeDashboard() {
 								const decisions = decisionOptions(
 									request.method,
 								);
-								const params = request.params ?? {};
+								const params = (request.params ?? {}) as ApprovalParams;
 
 								return (
 									<article

@@ -7,10 +7,14 @@ import {
   ClaudeBridge,
   getClaudeArgs,
   normalizeClaudeAuthMode,
-} from "../lib/claude-bridge.js";
-import { getBridgeProvider } from "../lib/bridge.js";
+} from "../lib/claude-bridge";
+import { getBridgeProvider } from "../lib/bridge";
 
 class FakeProcess extends EventEmitter {
+  stdout: PassThrough;
+  stderr: PassThrough;
+  pid: number;
+
   constructor() {
     super();
     this.stdout = new PassThrough();
@@ -18,7 +22,15 @@ class FakeProcess extends EventEmitter {
     this.pid = 4321;
   }
 
-  finish({ stderr = "", exitCode = 0, lines = [] } = {}) {
+  finish({
+    stderr = "",
+    exitCode = 0,
+    lines = [],
+  }: {
+    stderr?: string;
+    exitCode?: number;
+    lines?: unknown[];
+  } = {}) {
     for (const line of lines) {
       this.stdout.write(`${JSON.stringify(line)}\n`);
     }
@@ -82,7 +94,11 @@ test("ClaudeBridge becomes ready after auth status succeeds", async () => {
 test("ClaudeBridge handles a complete turn and resumes on the second request", async () => {
   const proc1 = new FakeProcess();
   const proc2 = new FakeProcess();
-  const spawnCalls = [];
+  const spawnCalls: Array<{
+    command: string;
+    args: string[];
+    options: unknown;
+  }> = [];
   const ids = ["session-1", "turn-1", "turn-2"];
   const bridge = new ClaudeBridge({
     execFileJson: async () => ({
@@ -96,7 +112,7 @@ test("ClaudeBridge handles a complete turn and resumes on the second request", a
     },
     generateId: () => ids.shift(),
   });
-  const events = [];
+  const events: any[] = [];
   bridge.on("event", (event) => {
     events.push(event);
   });
@@ -208,7 +224,7 @@ test("ClaudeBridge surfaces permission denials as an assistant message", async (
       return () => ids.shift();
     })(),
   });
-  const events = [];
+  const events: any[] = [];
   bridge.on("event", (event) => events.push(event));
 
   await bridge.submitPrompt("needs permission");

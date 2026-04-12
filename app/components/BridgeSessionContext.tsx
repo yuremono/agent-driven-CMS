@@ -1,12 +1,15 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { ReactNode } from "react";
 
 import { useBridgeSession } from "./useBridgeSession";
 
-const BridgeSessionContext = createContext(null);
+type BridgeSession = ReturnType<typeof useBridgeSession>;
 
-export function BridgeSessionProvider({ children }) {
+const BridgeSessionContext = createContext<BridgeSession | null>(null);
+
+export function BridgeSessionProvider({ children }: { children: ReactNode }) {
   const session = useBridgeSession();
 
   return (
@@ -20,7 +23,9 @@ export function useBridgeSessionContext() {
   const session = useContext(BridgeSessionContext);
 
   if (!session) {
-    throw new Error("useBridgeSessionContext must be used within BridgeSessionProvider");
+    throw new Error(
+      "useBridgeSessionContext must be used within BridgeSessionProvider",
+    );
   }
 
   return session;

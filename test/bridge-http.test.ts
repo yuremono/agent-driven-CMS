@@ -6,7 +6,7 @@ import {
   jsonError,
   readJsonBody,
   sameOriginForbidden,
-} from "../lib/bridge-http.js";
+} from "../lib/bridge-http";
 
 test("jsonError returns the fallback message for non-Error values", async () => {
   const response = jsonError("nope", "fallback", 418);
@@ -55,7 +55,7 @@ test("readJsonBody parses request JSON and falls back on invalid bodies", async 
 test("fetchJson returns parsed data and surfaces API errors", async () => {
   const originalFetch = global.fetch;
 
-  global.fetch = async (path) => {
+  global.fetch = (async (path: RequestInfo | URL) => {
     if (path === "/api/ok") {
       return new Response(JSON.stringify({ result: "ok" }), {
         headers: {
@@ -71,7 +71,7 @@ test("fetchJson returns parsed data and surfaces API errors", async () => {
       },
       status: 500,
     });
-  };
+  }) as typeof fetch;
 
   try {
     await assert.deepEqual(await fetchJson("/api/ok"), { result: "ok" });

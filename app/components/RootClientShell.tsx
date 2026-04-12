@@ -13,7 +13,7 @@ import {
 
 const DevBridgeLayer = dynamic(
   () =>
-    import("./DevBridgeLayer.jsx").then(
+    import("./DevBridgeLayer").then(
       (mod) => mod.default as unknown as ComponentType<Record<string, never>>,
     ),
   { ssr: false },
