@@ -1,6 +1,12 @@
 "use client";
 
-import { CaretUp, PaperPlaneRight, Plus } from "@phosphor-icons/react";
+import {
+	ArrowsOutLineHorizontalIcon,
+	ArrowsOutLineVerticalIcon,
+	CaretUp,
+	PaperPlaneRight,
+	Plus,
+} from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useBridgeSessionContext } from "./BridgeSessionContext.jsx";
@@ -80,6 +86,8 @@ export default function DevEditorOverlay() {
 	const stickToBottomRef = useRef(true);
 	const [attachmentNames, setAttachmentNames] = useState([]);
 	const [dockHeight, setDockHeight] = useState(0);
+	const [isComposerCollapsed, setIsComposerCollapsed] = useState(false);
+	const [isTranscriptCollapsed, setIsTranscriptCollapsed] = useState(false);
 
 	useLayoutEffect(() => {
 		const node = dockRef.current;
@@ -142,137 +150,179 @@ export default function DevEditorOverlay() {
 				: `${attachmentNames.length} files attached`
 			: "ファイルを添付";
 	const showComposerHint = input.trim().length === 0;
+	const isTranscriptHidden = isComposerCollapsed || isTranscriptCollapsed;
+	const composerVisibilityClass = isComposerCollapsed
+		? "pointer-events-none opacity-0"
+		: "pointer-events-auto opacity-100";
+	const transcriptVisibilityClass = isTranscriptHidden
+		? "pointer-events-none opacity-0"
+		: "pointer-events-auto opacity-100";
+	const transcriptToggleVisibilityClass = isComposerCollapsed
+		? "pointer-events-none opacity-0"
+		: "pointer-events-auto opacity-100";
 	const transcriptStyle = {
 		maxHeight: `calc(100dvh - 2rem) - ${dockHeight}px - 0.75rem)`,
 	};
 
 	return (
 		<div className="editorOverlay pointer-events-none">
-			<div className="editorTranscriptRail pointer-events-auto bg-[var(--WH40)] backdrop-blur-lg">
-				<TranscriptLog
-					style={transcriptStyle}
-					onScroll={handleTranscriptScroll}
-					transcript={transcript}
-					viewportRef={transcriptViewportRef}
-				/>
-				<button
-					aria-label="チャットログを閉じる"
-					className="editorIconButton absolute bottom-2 right-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10))] bg-white/75 transition hover:bg-white"
-					onClick={handleAttachmentClick}
-					type="button"
-					title="ログを閉じる"
+			<div className="relative min-h-10">
+				<div
+					aria-hidden={isTranscriptHidden}
+					className={`editorTranscriptRail bg-[var(--WH40)] backdrop-blur-lg transition-opacity duration-200 ${transcriptVisibilityClass}`}
+					id="editor-transcript-log"
 				>
-					<Plus size={20} weight="regular" />
+					<TranscriptLog
+						style={transcriptStyle}
+						onScroll={handleTranscriptScroll}
+						transcript={transcript}
+						viewportRef={transcriptViewportRef}
+					/>
+				</div>
+				<button
+					aria-controls="editor-transcript-log"
+					aria-label={
+						isTranscriptCollapsed
+							? "チャットログを表示"
+							: "チャットログを閉じる"
+					}
+					aria-pressed={isTranscriptCollapsed}
+					className={`editorIconButton absolute bottom-2 right-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10)] bg-[var(--WH70)] transition hover:bg-[var(--WH)] ${transcriptToggleVisibilityClass}`}
+					onClick={() => setIsTranscriptCollapsed((current) => !current)}
+					tabIndex={isComposerCollapsed ? -1 : undefined}
+					type="button"
+					title={
+						isTranscriptCollapsed
+							? "チャットログを表示"
+							: "ログを閉じる"
+					}
+				>
+					<ArrowsOutLineVerticalIcon size={20} weight="regular" />
 				</button>
 			</div>
 
-			<section
-				ref={dockRef}
-				className="editorDock pointer-events-auto w-full rounded-[38px]  px-2 py-2 s bg-[var(--WH40)] backdrop-blur-lg"
-			>
-				<form
-					className="flex items-end gap-2 max-md:flex-wrap"
-					onSubmit={handleSubmit}
+			<div className="relative">
+				<section
+					aria-hidden={isComposerCollapsed}
+					id="editor-composer-panel"
+					inert={isComposerCollapsed ? "" : undefined}
+					ref={dockRef}
+					className={`editorDock w-full rounded-[38px] bg-[var(--WH40)] py-2 pl-14 pr-2 backdrop-blur-lg transition-opacity duration-200 ${composerVisibilityClass}`}
 				>
-					<button
-						aria-label="チャットインプットを畳む"
-						className="editorIconButton inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10))] bg-white/75 transition hover:bg-white"
-						onClick={handleAttachmentClick}
-						type="button"
-						title="チャットインプットを畳む"
+					<form
+						className="flex items-end gap-2 max-md:flex-wrap"
+						onSubmit={handleSubmit}
 					>
-						<Plus size={20} weight="regular" />
-					</button>
-					<button
-						aria-label="ファイルを添付"
-						className="editorIconButton inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10))] bg-white/75 transition hover:bg-white"
-						onClick={handleAttachmentClick}
-						type="button"
-						title="ファイルを添付"
-					>
-						<Plus size={20} weight="regular" />
-					</button>
+						<button
+							aria-label="ファイルを添付"
+							className="editorIconButton inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10)] bg-[var(--WH70)] transition hover:bg-[var(--WH)]"
+							onClick={handleAttachmentClick}
+							type="button"
+							title="ファイルを添付"
+						>
+							<Plus size={20} weight="regular" />
+						</button>
 
-					<input
-						ref={fileInputRef}
-						className="sr-only"
-						multiple
-						onChange={handleAttachmentChange}
-						type="file"
-					/>
-
-					<div className="editorComposerField relative flex-1 min-w-0">
-						<textarea
-							aria-label="Editor prompt"
-							ref={textareaRef}
-							className="editorComposerInput block w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 not-only-of-type: outline-none"
-							onChange={(event) => setInput(event.target.value)}
-							placeholder=""
-							rows={1}
-							value={input}
+						<input
+							ref={fileInputRef}
+							className="sr-only"
+							multiple
+							onChange={handleAttachmentChange}
+							type="file"
 						/>
-						{showComposerHint ? (
-							<div className="w-full text-[var(--TC50)] pointer-events-none absolute left-1 top-0 h-full flex flex-wrap items-center gap-1 px-1 text-[0.92rem] leading-7 ">
-								<span>レッツバイブコーディング！&nbsp;</span>
-								<span className="ml-auto leading-none">
-									provider: {providerLabel}
-								</span>
-							</div>
-						) : null}
-					</div>
 
-					{/* <div className="editorComposerActions flex shrink-0 items-center gap-2 max-md:w-full max-md:justify-end"> */}
-					{modelOptions.length > 0 ? (
-						<label className="editorModelSelectWrap relative inline-flex items-center">
-							<span className="sr-only">モデルを選択</span>
-							<select
-								aria-label="モデルを選択"
-								className="editorModelSelect appearance-none rounded-full border border-[var(--GR10))] bg-white/76 min-h-10 pl-4 pr-10 text-sm outline-none transition focus:border-[var(--BK10)] focus:bg-white"
-								value={selectedModel}
-								onChange={(event) =>
-									setSelectedModel(event.target.value)
-								}
-							>
-								{modelOptions.map((option) => (
-									<option
-										key={option.value}
-										value={option.value}
-									>
-										{option.label}
-									</option>
-								))}
-							</select>
-							<CaretUp
-								aria-hidden="true"
-								className="pointer-events-none absolute right-3 "
-								size={16}
-								weight="bold"
+						<div className="editorComposerField relative min-w-0 flex-1">
+							<textarea
+								aria-label="Editor prompt"
+								ref={textareaRef}
+								className="editorComposerInput block w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 not-only-of-type: outline-none"
+								onChange={(event) => setInput(event.target.value)}
+								placeholder=""
+								rows={1}
+								value={input}
 							/>
-						</label>
-					) : null}
+							{showComposerHint ? (
+								<div className="pointer-events-none absolute left-1 top-0 flex h-full w-full flex-wrap items-center gap-1 px-1 text-[0.92rem] leading-7 text-[var(--TC50)] ">
+									<span>レッツバイブコーディング！&nbsp;</span>
+									<span className="ml-auto leading-none">
+										provider: {providerLabel}
+									</span>
+								</div>
+							) : null}
+						</div>
 
-					<button
-						aria-label={submitLabel}
-						className="editorSendButton inline-flex size-10 shrink-0 items-center justify-center rounded-full  bg-[var(--BK70)] hover:bg-[var(--BK)] text-white transition duration-200 disabled:cursor-progress disabled:opacity-65"
-						disabled={!canSubmit}
-						title={submitLabel}
-						type="submit"
-					>
-						<PaperPlaneRight size={18} weight="fill" />
-					</button>
-					{/* </div> */}
-				</form>
-
-				{attachmentNames.length > 0 ? (
-					<div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
-						{attachmentNames.length > 0 ? (
-							<span className="inline-flex items-center rounded-full border border-[var(--GR10)] bg-white/55 px-3 py-1">
-								{attachmentLabel}
-							</span>
+						{/* <div className="editorComposerActions flex shrink-0 items-center gap-2 max-md:w-full max-md:justify-end"> */}
+						{modelOptions.length > 0 ? (
+							<label className="editorModelSelectWrap relative inline-flex items-center">
+								<span className="sr-only">モデルを選択</span>
+								<select
+									aria-label="モデルを選択"
+									className="editorModelSelect min-h-10 appearance-none rounded-full border border-[var(--GR10)] bg-[var(--WH70)] pl-4 pr-10 text-sm outline-none transition focus:border-[var(--BK10)] focus:bg-[var(--WH)]"
+									value={selectedModel}
+									onChange={(event) =>
+										setSelectedModel(event.target.value)
+									}
+								>
+									{modelOptions.map((option) => (
+										<option
+											key={option.value}
+											value={option.value}
+										>
+											{option.label}
+										</option>
+									))}
+								</select>
+								<CaretUp
+									aria-hidden="true"
+									className="pointer-events-none absolute right-3 "
+									size={16}
+									weight="bold"
+								/>
+							</label>
 						) : null}
-					</div>
-				) : null}
-			</section>
+
+						<button
+							aria-label={submitLabel}
+							className="editorSendButton inline-flex size-10 shrink-0 items-center justify-center rounded-full  bg-[var(--BK70)] text-white transition duration-200 hover:bg-[var(--BK)] disabled:cursor-progress disabled:opacity-65"
+							disabled={!canSubmit}
+							title={submitLabel}
+							type="submit"
+						>
+							<PaperPlaneRight size={18} weight="fill" />
+						</button>
+						{/* </div> */}
+					</form>
+
+					{attachmentNames.length > 0 ? (
+						<div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[0.78rem] leading-6 text-[var(--GR10)]">
+							{attachmentNames.length > 0 ? (
+								<span className="inline-flex items-center rounded-full border border-[var(--GR10)] bg-white/55 px-3 py-1">
+									{attachmentLabel}
+								</span>
+							) : null}
+						</div>
+					) : null}
+				</section>
+				<button
+					aria-controls="editor-composer-panel editor-transcript-log"
+					aria-label={
+						isComposerCollapsed
+							? "チャットインプットを表示"
+							: "チャットインプットを小さくする"
+					}
+					aria-pressed={isComposerCollapsed}
+					className="editorIconButton pointer-events-auto absolute bottom-2 left-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--GR10)] bg-[var(--WH70)] transition hover:bg-[var(--WH)]"
+					onClick={() => setIsComposerCollapsed((current) => !current)}
+					type="button"
+					title={
+						isComposerCollapsed
+							? "チャットインプットを表示"
+							: "チャットインプットを小さくする"
+					}
+				>
+					<ArrowsOutLineHorizontalIcon size={20} weight="regular" />
+				</button>
+			</div>
 		</div>
 	);
 }
