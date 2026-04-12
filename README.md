@@ -25,8 +25,12 @@ npm run dev
 
 ## GitHub Pages プレビュー
 
-ローカル限定のため静的ページです。
+GitHub Pages では `app/` の公開ページを Next.js static export として配信します。
+ローカル編集用の bridge API と app-server 接続は Pages では動かさず、公開ページ本体だけを静的成果物として出します。
 
+```bash
+npm run build:pages
+```
 
 
 
