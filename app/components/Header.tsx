@@ -21,13 +21,13 @@ const actionItems = [
     href: "https://github.com/yuremono/creative-demos",
     label: "CreativeDemos",
     className:
-      "px-3 py-2   ",
+      "p-2   ",
   },
   {
     href: "https://yuremono.github.io/BurnYourOwnStyle/rects",
     label: "RandomRects",
     className:
-      "px-3 py-2   ",
+      "p-2   ",
   },
 ];
 
@@ -49,7 +49,7 @@ function BrandLockup() {
 function DesktopNav() {
   return (
     <nav className="HeaderNav hidden md:flex pointer-events-auto" aria-label="main navigation">
-      <ul className="HeaderUl flex flex-wrap items-center justify-center gap-1 px-3 py-2">
+      <ul className="HeaderUl flex flex-wrap items-center justify-center gap-1 p-2">
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
@@ -68,7 +68,7 @@ function DesktopNav() {
 
 function HeaderActions() {
   return (
-    <div className="HeaderItems hidden md:grid  pointer-events-auto text-right">
+    <div className="HeaderItems hidden md:grid  pointer-events-auto text-right p-2">
       {actionItems.map((item) => (
               <Link
               target="_blank" rel="noopener noreferrer" 

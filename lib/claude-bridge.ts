@@ -47,10 +47,10 @@ function getString(value: unknown): string | null {
 }
 
 const CLAUDE_MODELS = [
-  { label: "Auto", value: "auto" },
-  { label: "Claude Sonnet", value: "sonnet" },
-  { label: "Claude Opus", value: "opus" },
-  { label: "Claude Haiku", value: "haiku" },
+        { label: "Claude Sonnet", value: "sonnet" },
+        { label: "Claude Haiku", value: "haiku" },
+        { label: "Claude Opus", value: "opus" },
+        { label: "Auto", value: "auto" },
 ];
 
 const CLAUDE_CAPABILITIES = {
@@ -86,7 +86,7 @@ function getClaudeArgs({ permissionMode, sessionId, isResume, model, text }: {
     permissionMode,
   ];
 
-  if (model && model !== "auto") {
+  if (model && model !== "sonnet") {
     args.push("--model", model);
   }
 
@@ -181,7 +181,7 @@ class ClaudeBridge extends EventEmitter {
       providerLabel: "Claude Code",
       capabilities: this.capabilities,
       availableModels: this.availableModels,
-      defaultModel: "auto",
+      defaultModel: "sonnet",
       defaultPermissionMode: this.defaultPermissionMode,
       state: this.state,
       threadId: this.threadId,

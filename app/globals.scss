@@ -1,7 +1,27 @@
 @import "tailwindcss/index.css";
 @config "../tailwind.config.js";
 @source "./**/*.{js,jsx,ts,tsx,mdx}";
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
+:root {//font
+        --Ser: "Shippori Mincho","Noto Serif JP", serif;
+           // "Noto Sans JP",
+           // "メイリオ", Meiryo,
+        --San:
+                -apple-system,
+                /* iOS/macOS */
+                BlinkMacSystemFont,
+                /* macOS Safari/Chrome */
+                "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                /* macOS日本語 */
+                "Yu Gothic Medium", "Yu Gothic", "Meiryo",
+                /* Windows */
+                "Roboto", "Noto Sans CJK JP",
+                /* Android */
+                sans-serif;
 
+        --FF: var(--Ser) ,sans-serif;
+        --Eng:  var(--Ser), sans-serif;
+}
 :root {/*  ユーザーの指示がなければ編集禁止*/
   color-scheme: light;
   /* --- テーマ色（Canvas は readShowcasePalette で参照。ドーナツ4扇は --MC〜--BC）--- */
@@ -267,27 +287,7 @@
         paint-order:stroke;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;800&display=swap');
-:root {//font
-        --Ser: "Shippori Mincho","Noto Serif JP", serif;
-           // "Noto Sans JP",
-           // "メイリオ", Meiryo,
-        --San:
-                -apple-system,
-                /* iOS/macOS */
-                BlinkMacSystemFont,
-                /* macOS Safari/Chrome */
-                "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-                /* macOS日本語 */
-                "Yu Gothic Medium", "Yu Gothic", "Meiryo",
-                /* Windows */
-                "Roboto", "Noto Sans CJK JP",
-                /* Android */
-                sans-serif;
 
-        --FF: var(--Ser) ,sans-serif;
-        --Eng:  var(--Ser), sans-serif;
-}
 .effect{
         position: relative;
         isolation: isolate;
@@ -488,11 +488,8 @@
           justify-content: flex-end;
           border: 1px solid rgba(38, 27, 18, 0.1);
           border-radius: 32px;
-          /* 単色（旧グラデーション廃止） */
-          background: var(--BC);
-          color: var(--TC);
-          box-shadow: 0 22px 72px rgba(39, 24, 12, 0.14);
-          backdrop-filter: blur(28px);
+          box-shadow: 0 22px 72px var(--TC10);
+        //   backdrop-filter: blur(28px);
           padding: 1em;
         }
         
@@ -502,12 +499,16 @@
           width: 100%;
           overflow-y:auto;
           padding-right: 0.5em;
+
                 height:100%;
                 &::-webkit-scrollbar{background-color: transparent;width: 8px;height: 0;}
                 &::-webkit-scrollbar-thumb {
                         background-color:var(--GR);
                         border-radius: 100px;
                 }
+        }
+        .editorDock {
+                box-shadow: 0 22px 72px var(--TC10);
         }
         
         
@@ -535,7 +536,6 @@
           font-size: 0.65rem;
           text-transform: uppercase;
           letter-spacing: 0.18em;
-          color: var(--SC);
         }
         
         .editorTranscriptBubble {
@@ -557,7 +557,6 @@
         
         .editorTranscriptBubbleError {
           background: rgba(182, 83, 37, 0.12);
-          color: #7f3518;
         }
         
         @media (min-width: 768px) {
