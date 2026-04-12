@@ -1,0 +1,47 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "1478efc6ca9d2ca7f3149dc44c4794989dd70ded",
+  "prompts": {
+    "43868e0209ee7a8b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d9da515-3438-463c-9ca5-a7a3c2e43f11",
+        "model": "glm-4.7"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "d128c60085356f1d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d810e-806c-7d40-9497-559ab9dc945f",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "e5173669fb1deaa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-1f6b-7873-a456-9ef50820d59b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2504,
+      "overriden_lines": 0
+    }
+  }
+}
