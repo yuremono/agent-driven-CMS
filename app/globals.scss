@@ -245,6 +245,9 @@
                 color: var(--WH);
                 -webkit-text-stroke: .25em var(--BK);
                 paint-order:stroke;
+                &:hover{
+                        color: var(--MC);
+                }
                 // border: 1rem solid transparent; /* 1. 枠線の幅を確保 */
         }
 } 

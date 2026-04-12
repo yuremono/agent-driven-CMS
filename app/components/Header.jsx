@@ -21,13 +21,13 @@ const actionItems = [
     href: "https://github.com/yuremono/creative-demos",
     label: "CreativeDemos",
     className:
-      "inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC] transition hover:text-[--SC]",
+      "px-3 py-2  transition ",
   },
   {
     href: "https://yuremono.github.io/BurnYourOwnStyle/rects",
     label: "RandomRects",
     className:
-      "inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC] transition hover:text-[--SC]",
+      "px-3 py-2  transition ",
   },
 ];
 
@@ -54,7 +54,7 @@ function DesktopNav() {
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC]  hover:text-[--SC]"
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-[--TC]  "
             >
               {item.label}
             </Link>
@@ -67,7 +67,7 @@ function DesktopNav() {
 
 function HeaderActions() {
   return (
-    <div className="HeaderItems hidden md:flex items-center gap-1 pointer-events-auto">
+    <div className="HeaderItems hidden md:grid  pointer-events-auto text-right">
       {actionItems.map((item) => (
         <Link key={item.href} href={item.href} className={item.className}>
           {item.label}
