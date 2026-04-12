@@ -1,0 +1,36 @@
+app/components/DevEditorOverlay.jsx
+  94774450f74c4be4 153,183-204,211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "68fa25ea388c0c61b77dc9df3e271d514f14dc48",
+  "prompts": {
+    "94774450f74c4be4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d80d5-7b46-7fa3-bebc-ebb88b003372",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 21,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "e5173669fb1deaa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-1f6b-7873-a456-9ef50820d59b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2504,
+      "overriden_lines": 0
+    }
+  }
+}
