@@ -6,6 +6,8 @@ import {
   beginAssistantMessage,
   completeAssistantMessage,
   createTranscriptRuntime,
+  restoreTranscriptRuntime,
+  serializeTranscriptRuntime,
 } from "../app/components/useBridgeSession.js";
 
 function latestAssistant(conversation) {
@@ -136,4 +138,58 @@ test("pending assistant placeholder accepts deltas and completion", () => {
   assert.equal(conversation.length, 1);
   assert.equal(assistant?.text, "streamed text");
   assert.equal(assistant?.status, "complete");
+});
+
+test("restored runtime keeps completed turn guard after reload", () => {
+  const runtime = createTranscriptRuntime();
+  let conversation = [];
+
+  conversation = beginAssistantMessage(conversation, runtime, { turnId: "turn-6" });
+  conversation = completeAssistantMessage(conversation, runtime, {
+    turnId: "turn-6",
+    text: "Already done",
+  });
+
+  const restoredRuntime = restoreTranscriptRuntime(
+    serializeTranscriptRuntime(runtime),
+    conversation,
+  );
+  conversation = applyAssistantDelta(conversation, restoredRuntime, {
+    turnId: "turn-6",
+    delta: " late fragment",
+  });
+
+  const assistant = latestAssistant(conversation);
+  assert.equal(conversation.length, 1);
+  assert.equal(assistant?.text, "Already done");
+  assert.equal(assistant?.status, "complete");
+});
+
+test("restored runtime keeps pending assistant placeholder after reload", () => {
+  const runtime = createTranscriptRuntime();
+  runtime.pendingAssistantId = runtime.nextId++;
+  const assistantId = runtime.pendingAssistantId;
+  let conversation = [
+    {
+      id: assistantId,
+      role: "assistant",
+      text: "",
+      status: "streaming",
+    },
+  ];
+
+  const restoredRuntime = restoreTranscriptRuntime(
+    serializeTranscriptRuntime(runtime),
+    conversation,
+  );
+  conversation = applyAssistantDelta(conversation, restoredRuntime, {
+    turnId: "turn-7",
+    delta: "continued",
+  });
+
+  const assistant = latestAssistant(conversation);
+  assert.equal(conversation.length, 1);
+  assert.equal(assistant?.id, assistantId);
+  assert.equal(assistant?.text, "continued");
+  assert.equal(assistant?.status, "streaming");
 });

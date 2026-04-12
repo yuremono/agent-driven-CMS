@@ -7,6 +7,7 @@ import { fetchJson } from "../../lib/bridge-http";
 
 type TranscriptRole = "assistant" | "user";
 type TranscriptStatus = "complete" | "error" | "streaming";
+type RuntimeKey = string | number;
 type TranscriptEntry = {
   id: number;
   role: TranscriptRole;
@@ -16,9 +17,9 @@ type TranscriptEntry = {
 type TranscriptRuntime = {
   nextId: number;
   pendingAssistantId: number | null;
-  assistantIdByTurnId: Map<string | number, number>;
-  assistantIdByItemId: Map<string | number, number>;
-  completedTurnIds: Set<string | number>;
+  assistantIdByTurnId: Map<RuntimeKey, number>;
+  assistantIdByItemId: Map<RuntimeKey, number>;
+  completedTurnIds: Set<RuntimeKey>;
 };
 type ApprovalRequest = {
   requestId: string | number;
@@ -35,6 +36,22 @@ type RateLimitSummary = {
 type TurnPlan = {
   plan?: unknown[];
 } | null;
+type PersistedTranscriptRuntime = {
+  nextId: number;
+  pendingAssistantId: number | null;
+  assistantIdByTurnId: [RuntimeKey, number][];
+  assistantIdByItemId: [RuntimeKey, number][];
+  completedTurnIds: RuntimeKey[];
+};
+type PersistedBridgeSession = {
+  version: 1;
+  threadId: string | null;
+  input: string;
+  selectedModel: string;
+  currentTurnId: RuntimeKey | null;
+  conversation: TranscriptEntry[];
+  runtime: PersistedTranscriptRuntime;
+};
 type BridgeEventPayload = Record<string, unknown> & {
   id?: string | number;
   type?: string;
@@ -47,6 +64,18 @@ type BridgeEventPayload = Record<string, unknown> & {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isRuntimeKey(value: unknown): value is RuntimeKey {
+  return typeof value === "string" || typeof value === "number";
+}
+
+function isTranscriptRole(value: unknown): value is TranscriptRole {
+  return value === "assistant" || value === "user";
+}
+
+function isTranscriptStatus(value: unknown): value is TranscriptStatus {
+  return value === "complete" || value === "error" || value === "streaming";
 }
 
 const emptyStatus: BridgeStatus = {
@@ -81,6 +110,149 @@ const emptyStatus: BridgeStatus = {
   initialized: false,
   ready: false,
 };
+const BRIDGE_SESSION_STORAGE_KEY = "agent-driven-cms.bridgeSession.v1";
+const MAX_PERSISTED_TRANSCRIPT_ENTRIES = 120;
+
+function sanitizeTranscriptEntry(value: unknown): TranscriptEntry | null {
+  if (!isRecord(value)) return null;
+  if (!Number.isFinite(value.id)) return null;
+  if (!isTranscriptRole(value.role)) return null;
+  if (!isTranscriptStatus(value.status)) return null;
+  if (typeof value.text !== "string") return null;
+
+  return {
+    id: value.id as number,
+    role: value.role,
+    text: value.text,
+    status: value.status,
+  };
+}
+
+function sanitizeConversation(value: unknown): TranscriptEntry[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => sanitizeTranscriptEntry(item))
+    .filter((item): item is TranscriptEntry => item != null)
+    .slice(-MAX_PERSISTED_TRANSCRIPT_ENTRIES);
+}
+
+function sanitizeRuntimeMap(
+  value: unknown,
+  entryIds: Set<number>,
+): [RuntimeKey, number][] {
+  if (!Array.isArray(value)) return [];
+
+  const entries: [RuntimeKey, number][] = [];
+  value.forEach((item) => {
+    if (!Array.isArray(item) || item.length !== 2) return;
+    const [key, entryId] = item;
+    if (!isRuntimeKey(key)) return;
+    if (!Number.isFinite(entryId) || !entryIds.has(entryId)) return;
+    entries.push([key, entryId]);
+  });
+
+  return entries;
+}
+
+function sanitizeRuntimeKeyList(value: unknown): RuntimeKey[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRuntimeKey);
+}
+
+export function serializeTranscriptRuntime(
+  runtime: TranscriptRuntime,
+): PersistedTranscriptRuntime {
+  return {
+    nextId: runtime.nextId,
+    pendingAssistantId: runtime.pendingAssistantId,
+    assistantIdByTurnId: Array.from(runtime.assistantIdByTurnId.entries()),
+    assistantIdByItemId: Array.from(runtime.assistantIdByItemId.entries()),
+    completedTurnIds: Array.from(runtime.completedTurnIds.values()),
+  };
+}
+
+export function restoreTranscriptRuntime(
+  value: unknown,
+  conversation: TranscriptEntry[] = [],
+): TranscriptRuntime {
+  const runtime = createTranscriptRuntime();
+  const persisted = isRecord(value) ? value : null;
+  const entryIds = new Set(conversation.map((entry) => entry.id));
+  const nextIdFromConversation = Math.max(
+    1,
+    ...conversation.map((entry) => entry.id + 1),
+  );
+
+  if (persisted && Number.isFinite(persisted.nextId)) {
+    runtime.nextId = Math.max(persisted.nextId as number, nextIdFromConversation);
+  } else {
+    runtime.nextId = nextIdFromConversation;
+  }
+
+  if (
+    persisted &&
+    Number.isFinite(persisted.pendingAssistantId) &&
+    entryIds.has(persisted.pendingAssistantId as number)
+  ) {
+    runtime.pendingAssistantId = persisted.pendingAssistantId as number;
+  }
+
+  sanitizeRuntimeMap(persisted?.assistantIdByTurnId, entryIds).forEach(
+    ([turnId, entryId]) => runtime.assistantIdByTurnId.set(turnId, entryId),
+  );
+  sanitizeRuntimeMap(persisted?.assistantIdByItemId, entryIds).forEach(
+    ([itemId, entryId]) => runtime.assistantIdByItemId.set(itemId, entryId),
+  );
+  sanitizeRuntimeKeyList(persisted?.completedTurnIds).forEach((turnId) =>
+    runtime.completedTurnIds.add(turnId),
+  );
+
+  return runtime;
+}
+
+function readPersistedBridgeSession(): PersistedBridgeSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(BRIDGE_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isRecord(parsed) || parsed.version !== 1) return null;
+
+    const conversation = sanitizeConversation(parsed.conversation);
+    const runtime = restoreTranscriptRuntime(parsed.runtime, conversation);
+
+    return {
+      version: 1,
+      threadId: typeof parsed.threadId === "string" ? parsed.threadId : null,
+      input: typeof parsed.input === "string" ? parsed.input : "",
+      selectedModel:
+        typeof parsed.selectedModel === "string"
+          ? parsed.selectedModel
+          : emptyStatus.defaultModel,
+      currentTurnId: isRuntimeKey(parsed.currentTurnId) ? parsed.currentTurnId : null,
+      conversation,
+      runtime: serializeTranscriptRuntime(runtime),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedBridgeSession(session: PersistedBridgeSession): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.sessionStorage.setItem(
+      BRIDGE_SESSION_STORAGE_KEY,
+      JSON.stringify(session),
+    );
+  } catch {
+    // Storage can be unavailable in private browsing or quota-exceeded states.
+  }
+}
 
 function upsertByRequestId(list: ApprovalRequest[], request: ApprovalRequest) {
   const index = list.findIndex((item) => item.requestId === request.requestId);
@@ -336,20 +508,34 @@ export function completeAssistantMessage(
 }
 
 export function useBridgeSession() {
+  const persistedSessionRef = useRef<PersistedBridgeSession | null | undefined>(undefined);
+  if (persistedSessionRef.current === undefined) {
+    persistedSessionRef.current = readPersistedBridgeSession();
+  }
+  const persistedSession = persistedSessionRef.current;
+  const persistedThreadIdRef = useRef(persistedSession?.threadId ?? null);
   const [status, setStatus] = useState(emptyStatus);
-  const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState(emptyStatus.defaultModel);
+  const [input, setInput] = useState(persistedSession?.input ?? "");
+  const [selectedModel, setSelectedModel] = useState(
+    persistedSession?.selectedModel ?? emptyStatus.defaultModel,
+  );
   const [sending, setSending] = useState(false);
   const [events, setEvents] = useState<LocalEvent[]>([]);
-  const [conversation, setConversation] = useState<TranscriptEntry[]>([]);
-  const [currentTurnId, setCurrentTurnId] = useState<string | number | null>(null);
+  const [conversation, setConversation] = useState<TranscriptEntry[]>(
+    persistedSession?.conversation ?? [],
+  );
+  const [currentTurnId, setCurrentTurnId] = useState<RuntimeKey | null>(
+    persistedSession?.currentTurnId ?? null,
+  );
   const [turnDiff, setTurnDiff] = useState("");
   const [turnPlan, setTurnPlan] = useState<TurnPlan>(null);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [respondingRequestId, setRespondingRequestId] = useState<string | number | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [rateLimitsBusy, setRateLimitsBusy] = useState(false);
-  const transcriptRuntimeRef = useRef(createTranscriptRuntime());
+  const transcriptRuntimeRef = useRef(
+    restoreTranscriptRuntime(persistedSession?.runtime, persistedSession?.conversation ?? []),
+  );
   const [authRoutes, setAuthRoutes] = useState({
     account: false,
     login: false,
@@ -525,6 +711,35 @@ export function useBridgeSession() {
       source.close();
     };
   }, []);
+
+  useEffect(() => {
+    if (!status.threadId) return;
+
+    if (
+      persistedThreadIdRef.current &&
+      persistedThreadIdRef.current !== status.threadId
+    ) {
+      transcriptRuntimeRef.current = createTranscriptRuntime();
+      setConversation([]);
+      setCurrentTurnId(null);
+      setTurnDiff("");
+      setTurnPlan(null);
+    }
+
+    persistedThreadIdRef.current = status.threadId;
+  }, [status.threadId]);
+
+  useEffect(() => {
+    writePersistedBridgeSession({
+      version: 1,
+      threadId: persistedThreadIdRef.current ?? status.threadId ?? null,
+      input,
+      selectedModel,
+      currentTurnId,
+      conversation: conversation.slice(-MAX_PERSISTED_TRANSCRIPT_ENTRIES),
+      runtime: serializeTranscriptRuntime(transcriptRuntimeRef.current),
+    });
+  }, [conversation, currentTurnId, input, selectedModel, status.threadId]);
 
   const provider = status.provider ?? "codex";
   const providerLabel = status.providerLabel ?? (provider === "claude" ? "Claude Code" : "Codex");
