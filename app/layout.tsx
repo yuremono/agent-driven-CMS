@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import RootClientShell from "./components/RootClientShell";
 
 export const metadata: Metadata = {
-  title: "Northstar Studio",
+  title: "A",
   description: "Local-first site editing with a development-only Codex overlay.",
 };
 
