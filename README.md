@@ -2,6 +2,10 @@
 
 Codex app-server を既定で使い、起動時切替で Claude Code も併用できるローカル向け CMS テンプレートです。
 
+## デモ動画
+
+<video src="https://raw.githubusercontent.com/yuremono/agent-driven-CMS/main/public/video/demo.mp4" controls playsinline width="100%"></video>
+
 ## 開発
 
 ```bash
