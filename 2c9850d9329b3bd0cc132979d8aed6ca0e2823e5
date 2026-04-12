@@ -1,0 +1,42 @@
+app/components/BridgeDashboard.jsx
+  d128c60085356f1d 66,359,365-394
+test/useBridgeSession.transcript.test.js
+  d128c60085356f1d 60,63-64,109,140,143-144,167
+app/components/RootClientShell.tsx
+  d128c60085356f1d 4,38-40,78
+app/components/useBridgeSession.ts
+  d128c60085356f1d 482-485,502-509,518-519,522-523,530-532,709-722,743-744,754-761
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "2c9850d9329b3bd0cc132979d8aed6ca0e2823e5",
+  "prompts": {
+    "d128c60085356f1d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d810e-806c-7d40-9497-559ab9dc945f",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 97,
+      "total_deletions": 39,
+      "accepted_lines": 97,
+      "overriden_lines": 0
+    },
+    "e5173669fb1deaa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-1f6b-7873-a456-9ef50820d59b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "yuremono",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2503,
+      "overriden_lines": 0
+    }
+  }
+}
